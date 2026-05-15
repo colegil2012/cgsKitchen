@@ -1,0 +1,96 @@
+/* ==========================================================================
+   Typography
+   --------------------------------------------------------------------------
+   Base text styles. Component-specific overrides live with their components.
+   ========================================================================== */
+
+body {
+    font-family: var(--font-body);
+    font-size: var(--fs-base);
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    line-height: var(--lh-tight);
+    letter-spacing: -0.02em;
+}
+
+h1 { font-size: var(--fs-5xl); }
+h2 { font-size: var(--fs-4xl); }
+h3 { font-size: var(--fs-2xl); }
+h4 { font-size: var(--fs-xl); }
+h5 { font-size: var(--fs-lg); }
+
+em {
+    font-style: italic;
+}
+
+a {
+    color: var(--color-gold-dark);
+    transition: color var(--duration-fast) ease;
+}
+
+a:hover {
+    color: var(--color-gold-darker);
+}
+
+p + p {
+    margin-top: var(--space-4);
+}
+
+/* Selection */
+::selection {
+    background-color: var(--color-gold-dark);
+    color: var(--color-paper);
+}
+
+/* ----- Utility text classes ----- */
+
+.text-mono {
+    font-family: var(--font-mono);
+}
+
+.text-display {
+    font-family: var(--font-display);
+}
+
+.text-muted {
+    color: var(--color-muted);
+}
+
+.text-salsa {
+    color: var(--color-salsa);
+}
+
+.text-avocado {
+    color: var(--color-avocado);
+}
+
+.text-center { text-align: center; }
+.text-right  { text-align: right; }
+
+.eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--color-muted);
+}
+
+/* "Stamp" — a small pill label, vaguely letterpress-inspired.
+   Used for category labels, est. dates, etc. */
+.stamp {
+    display: inline-block;
+    border: 2px solid currentColor;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 700;
+    line-height: 1;
+}

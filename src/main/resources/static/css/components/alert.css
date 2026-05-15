@@ -1,0 +1,31 @@
+/* ==========================================================================
+   Alerts / flash messages
+   ========================================================================== */
+
+.alert {
+    padding: var(--space-4) var(--space-5);
+    border-radius: var(--radius-md);
+    border: 2px solid;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--fs-sm);
+}
+
+.alert-success {
+    background-color: rgba(90, 130, 60, 0.1);
+    border-color: var(--color-avocado);
+    color: var(--color-avocado);
+}
+
+.alert-error {
+    background-color: rgba(220, 75, 35, 0.1);
+    border-color: var(--color-gold-dark);
+    color: var(--color-gold-darker);
+}
+
+.alert-info {
+    background-color: rgba(244, 200, 102, 0.2);
+    border-color: var(--color-butter);
+    color: var(--color-ink);
+}

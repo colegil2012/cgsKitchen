@@ -1,0 +1,118 @@
+/* ==========================================================================
+   Form elements
+   ========================================================================== */
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.form-label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--color-muted);
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+    padding: var(--space-3) var(--space-4);
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    border: 2px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
+    font-size: var(--fs-base);
+    transition: border-color var(--duration-fast) ease;
+    width: 100%;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+    outline: none;
+    border-color: var(--color-gold-dark);
+}
+
+.form-textarea {
+    min-height: 120px;
+    resize: vertical;
+    font-family: var(--font-body);
+}
+
+.form-error {
+    color: var(--color-danger);
+    font-size: var(--fs-sm);
+}
+
+.form-help {
+    color: var(--color-muted);
+    font-size: var(--fs-sm);
+}
+
+/* Toggle group — used for fulfillment selector */
+.form-toggle-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+}
+
+.form-toggle {
+    display: block;
+    cursor: pointer;
+}
+
+.form-toggle input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.form-toggle__label {
+    display: block;
+    padding: var(--space-4);
+    border: 2px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    transition: all var(--duration-fast) ease;
+}
+
+.form-toggle__title {
+    font-weight: 700;
+    font-size: var(--fs-base);
+    margin-bottom: 2px;
+}
+
+.form-toggle__sub {
+    font-size: var(--fs-sm);
+    color: var(--color-muted);
+}
+
+.form-toggle input[type="radio"]:checked + .form-toggle__label {
+    background-color: var(--color-ink);
+    color: var(--color-paper);
+    border-color: var(--color-ink);
+}
+
+.form-toggle input[type="radio"]:checked + .form-toggle__label .form-toggle__sub {
+    color: rgba(250, 240, 218, 0.7);
+}
+
+/* Inline button + input combo (e.g., delivery quote) */
+.form-inline {
+    display: flex;
+    gap: var(--space-2);
+    align-items: stretch;
+}
+
+.form-inline .form-input {
+    flex: 1;
+}
+
+/* States used by JS-driven quote result text */
+.quote-result-ok    { color: var(--color-avocado); }
+.quote-result-error { color: var(--color-salsa); }

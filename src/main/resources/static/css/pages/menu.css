@@ -1,0 +1,99 @@
+/* ==========================================================================
+   Menu page
+   ========================================================================== */
+
+.menu-page__header {
+    text-align: center;
+    padding-block: var(--space-16) var(--space-12);
+    background-color: var(--color-paper);
+    border-bottom: 1px solid var(--color-brown-dark);
+}
+
+.menu-page__title {
+    font-size: var(--fs-5xl);
+    margin-block: var(--space-4);
+}
+
+.menu-page__title em {
+    color: var(--color-green-dark);
+}
+
+.menu-page__nav {
+    position: sticky;
+    top: 70px;
+    z-index: calc(var(--z-nav) - 1);
+    background-color: var(--color-gold-dark);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--color-brown-dark);
+    padding-block: var(--space-4);
+}
+
+.menu-page__nav-inner {
+    width: 100%;
+    max-width: var(--container-max);
+    margin-inline: auto;
+    padding-inline: var(--space-6);
+    display: flex;
+    gap: var(--space-3);
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.menu-page__nav-inner::-webkit-scrollbar {
+    display: none;
+}
+
+.menu-page__category-link {
+    padding: var(--space-2) var(--space-5);
+    border-radius: var(--radius-full);
+    border: 2px solid var(--color-ink);
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+        background-color var(--duration-fast) ease,
+        color var(--duration-fast) ease;
+}
+
+.menu-page__category-link:hover {
+    background-color: var(--color-ink);
+    color: var(--color-paper);
+}
+
+.menu-category {
+    padding-block: var(--space-16);
+    scroll-margin-top: 140px;  /* sticky nav offset */
+}
+
+.menu-category:not(:last-child) {
+    border-bottom: 1px solid var(--color-border);
+}
+
+.menu-category__heading {
+    text-align: center;
+    margin-bottom: var(--space-12);
+}
+
+.menu-category__title {
+    font-size: var(--fs-4xl);
+    text-transform: capitalize;
+}
+
+.menu-category__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+}
+
+@media (min-width: 800px) {
+    .menu-category__grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

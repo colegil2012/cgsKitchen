@@ -1,0 +1,115 @@
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-4) var(--space-8);
+    border-radius: var(--radius-full);
+    font-family: var(--font-body);
+    font-size: var(--fs-base);
+    font-weight: 700;
+    line-height: 1;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+        background-color var(--duration-base) var(--ease-out),
+        transform var(--duration-fast) var(--ease-out),
+        box-shadow var(--duration-base) var(--ease-out);
+    user-select: none;
+    white-space: nowrap;
+}
+
+.btn:active {
+    transform: translateY(1px);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ----- Variants ----- */
+
+.btn-primary {
+    background-color: var(--color-brown-light);
+    color: var(--color-paper-2);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: var(--color-brown-dark);
+    color: var(--color-paper);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+}
+
+.btn-secondary {
+    background-color: var(--color-paper);
+    color: var(--color-brown-dark);
+    border: 2px solid var(--color-gold-dark);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background-color: var(--color-gold-light);
+    color: var(--color-ink);
+}
+
+.btn-ghost {
+    background-color: transparent;
+    color: var(--color-brown-dark);
+    padding-inline: var(--space-4);
+}
+
+.btn-ghost:hover:not(:disabled) {
+    background-color: var(--color-paper-2);
+    color: var(--color-ink);
+}
+
+.btn-dark {
+    background-color: var(--color-brown-dark);
+    color: var(--color-paper);
+}
+
+.btn-dark:hover:not(:disabled) {
+    background-color: var(--color-gold-dark);
+    color: var(--color-paper);
+}
+
+/* ----- Sizes ----- */
+
+.btn-sm {
+    padding: var(--space-2) var(--space-5);
+    font-size: var(--fs-sm);
+}
+
+.btn-lg {
+    padding: var(--space-5) var(--space-10);
+    font-size: var(--fs-lg);
+}
+
+/* ----- Icon buttons ----- */
+
+.btn-icon {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: var(--radius-md);
+    background-color: var(--color-paper-2);
+    color: var(--color-ink);
+}
+
+.btn-icon:hover:not(:disabled) {
+    background-color: var(--color-butter);
+}
+
+.btn-icon-sm {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+}

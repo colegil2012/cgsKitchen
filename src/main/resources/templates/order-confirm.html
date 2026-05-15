@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title th:text="|Order placed — ${brand.brandName()}|">Order placed</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/checkout.css}">
+    </th:block>
+</head>
+
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container">
+    <div class="order-confirm">
+        <div class="order-confirm__icon">🌮</div>
+        <h1 class="order-confirm__title">Order placed!</h1>
+        <p class="order-confirm__lede">
+            We're firing up the grill. You'll get an email confirmation
+            shortly — usually 12 to 18 minutes until ready.
+        </p>
+
+        <p class="order-confirm__mock-notice" th:if="${mock}">
+            (mock checkout — Stripe was not contacted)
+        </p>
+
+        <p class="order-confirm__ref" th:if="${order != null}">
+            Reference: <span th:text="${order.id}">id</span>
+        </p>
+
+        <a class="btn btn-primary btn-lg" th:href="@{/menu}">Order another →</a>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

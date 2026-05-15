@@ -1,0 +1,100 @@
+/* ==========================================================================
+   Menu card — used on /menu and home featured section
+   ========================================================================== */
+
+.menu-card {
+    background-color: var(--color-paper);
+    border: 2px solid var(--color-brown-dark);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    display: flex;
+    gap: var(--space-4);
+    align-items: flex-start;
+    transition:
+        transform var(--duration-base) var(--ease-out),
+        box-shadow var(--duration-base) var(--ease-out);
+}
+
+.menu-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.menu-card__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.menu-card__header {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-2);
+}
+
+.menu-card__name {
+    font-family: var(--font-display);
+    font-size: var(--fs-2xl);
+    line-height: 1;
+}
+
+.menu-card__badge {
+    background-color: var(--color-gold-dark);
+    color: var(--color-paper);
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-full);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.menu-card__description {
+    color: var(--color-muted);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-loose);
+    margin-bottom: var(--space-3);
+}
+
+.menu-card__price {
+    font-family: var(--font-mono);
+    font-size: var(--fs-lg);
+    font-weight: 700;
+}
+
+.menu-card__add {
+    flex-shrink: 0;
+    align-self: center;
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-avocado);
+    color: var(--color-paper);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--fs-2xl);
+    font-weight: 700;
+    line-height: 1;
+    border: none;
+    cursor: pointer;
+    transition:
+        background-color var(--duration-fast) ease,
+        transform var(--duration-fast) var(--ease-spring);
+}
+
+.menu-card__add:hover {
+    background-color: var(--color-gold-dark);
+    transform: scale(1.05);
+}
+
+.menu-card__add:active {
+    transform: scale(0.95);
+}
+
+.menu-card--unavailable {
+    opacity: 0.5;
+    pointer-events: none;
+}

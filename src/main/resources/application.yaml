@@ -1,0 +1,98 @@
+# =============================================================================
+# cgsKitchen — application configuration
+# =============================================================================
+
+spring:
+  application:
+    name: cgsKitchen
+
+  # ---------------------------------------------------------------------------
+  # MongoDB
+  # ---------------------------------------------------------------------------
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/cgsKitchen}
+      auto-index-creation: true
+
+  # ---------------------------------------------------------------------------
+  # Thymeleaf — disable cache in dev for live reload
+  # ---------------------------------------------------------------------------
+  thymeleaf:
+    cache: ${THYMELEAF_CACHE:false}
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+
+  web:
+    resources:
+      # Disable resource caching in dev so CSS edits show up on refresh
+      cache:
+        period: ${STATIC_RESOURCE_CACHE:0}
+
+server:
+  port: ${SERVER_PORT:8080}
+  forward-headers-strategy: framework
+  shutdown: graceful
+  compression:
+    enabled: true
+    mime-types: text/html,text/css,application/javascript,application/json
+    min-response-size: 1024
+  servlet:
+    session:
+      timeout: 2h
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      client_id: ${CLIENT_ID:unset}
+
+# =============================================================================
+# Application config
+# =============================================================================
+app:
+  client-id: ${CLIENT_ID:el-conejo}
+  api-key: ${API_KEY:dev-shared-key-change-me}
+  cors-allowed-origins: ${CORS_ORIGINS:http://localhost:8080,http://localhost:3001}
+
+  storefront:
+    brand-name: ${BRAND_NAME:Celtech Kitchen}
+    tagline: ${BRAND_TAGLINE:Celtic Dishes, Kentucky Sourced.}
+    address-today: ${ADDRESS_TODAY:218 Bluebill Ct, Shepherdsville KY 40165}
+    hours-today: ${HOURS_TODAY:11 AM – 9 PM}
+    contact-email: ${CONTACT_EMAIL:cole@celtechgs.com}
+    contact-phone: ${CONTACT_PHONE:(502) 539-9605}
+    instagram-url: ${INSTAGRAM_URL:https://instagram.com/celtechgs}
+
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY:}
+    publishable-key: ${STRIPE_PUBLISHABLE_KEY:}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+    connected-account-id: ${STRIPE_ACCOUNT_ID:}
+    terminal-location-id: ${STRIPE_LOCATION_ID:}
+    platform-fee-bps: ${PLATFORM_FEE_BPS:0}
+
+  delivery:
+    provider: ${DELIVERY_PROVIDER:mock}
+    pickup-address: ${PICKUP_ADDRESS:218 Bluebill Ct, Shepherdsville KY 40165}
+    doordash:
+      developer-id: ${DOORDASH_DEV_ID:}
+      key-id: ${DOORDASH_KEY_ID:}
+      signing-secret: ${DOORDASH_SIGNING_SECRET:}
+    uber:
+      customer-id: ${UBER_CUSTOMER_ID:}
+      client-id: ${UBER_CLIENT_ID:}
+      client-secret: ${UBER_CLIENT_SECRET:}
+
+logging:
+  level:
+    root: INFO
+    com.celtech.solutions.foodtruck_web_demo: DEBUG

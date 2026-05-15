@@ -1,0 +1,41 @@
+/* ==========================================================================
+   Utilities
+   --------------------------------------------------------------------------
+   Small, sparing set. Anything used more than 3 times across pages earns
+   a class here so we never need inline `style="..."`.
+   ========================================================================== */
+
+/* Margin-top */
+.mt-2 { margin-top: var(--space-2); }
+.mt-4 { margin-top: var(--space-4); }
+.mt-6 { margin-top: var(--space-6); }
+.mt-8 { margin-top: var(--space-8); }
+
+/* Margin-bottom */
+.mb-2 { margin-bottom: var(--space-2); }
+.mb-4 { margin-bottom: var(--space-4); }
+.mb-6 { margin-bottom: var(--space-6); }
+.mb-8 { margin-bottom: var(--space-8); }
+
+/* Margin-block (top + bottom) */
+.my-4 { margin-block: var(--space-4); }
+.my-6 { margin-block: var(--space-6); }
+.my-8 { margin-block: var(--space-8); }
+
+/* Specifically for "lede after a heading then CTA" pattern */
+.lede-spacing { margin-block: var(--space-4) var(--space-8); }
+
+/* Visibility / accessibility */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.full-width { width: 100%; }

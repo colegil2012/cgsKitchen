@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title th:text="|Checkout — ${brand.brandName()}|">Checkout</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/checkout.css}">
+    </th:block>
+</head>
+
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="checkout">
+    <div th:if="${cart.empty}" class="checkout-empty container">
+        <div class="checkout-empty__icon">🛒</div>
+        <h1>Your cart is empty.</h1>
+        <p class="text-muted lede-spacing">
+            Browse the menu to add some items.
+        </p>
+        <a class="btn btn-primary btn-lg" th:href="@{/menu}">View menu</a>
+    </div>
+
+    <div th:unless="${cart.empty}" class="checkout__inner">
+        <!-- LEFT: form -->
+        <div>
+            <h1 class="checkout__title">Checkout</h1>
+
+            <div class="alert alert-info mb-6" th:if="${notice}" th:text="${notice}">notice</div>
+            <div class="alert alert-error mb-6" th:if="${error}" th:text="${error}">error</div>
+
+            <form th:action="@{/checkout}" method="post" th:object="${checkoutForm}" id="checkout-form">
+
+                <section class="checkout__section">
+                    <h2 class="checkout__section-title">Your details</h2>
+                    <div class="stack">
+                        <div class="form-field">
+                            <label class="form-label" for="name">Name</label>
+                            <input class="form-input" type="text" id="name"
+                                   th:field="*{name}" required>
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label" for="email">Email</label>
+                            <input class="form-input" type="email" id="email"
+                                   th:field="*{email}" required>
+                            <span class="form-help">For your order confirmation.</span>
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label" for="phone">Phone</label>
+                            <input class="form-input" type="tel" id="phone"
+                                   th:field="*{phone}">
+                            <span class="form-help">For delivery updates only.</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="checkout__section">
+                    <h2 class="checkout__section-title">Fulfillment</h2>
+                    <div class="form-toggle-group">
+                        <label class="form-toggle">
+                            <input type="radio" name="fulfillment" value="pickup" checked>
+                            <span class="form-toggle__label">
+                                <span class="form-toggle__title">Pickup</span>
+                                <span class="form-toggle__sub">Ready in ~12 min</span>
+                            </span>
+                        </label>
+                        <label class="form-toggle">
+                            <input type="radio" name="fulfillment" value="delivery">
+                            <span class="form-toggle__label">
+                                <span class="form-toggle__title">Delivery</span>
+                                <span class="form-toggle__sub">Via DoorDash</span>
+                            </span>
+                        </label>
+                    </div>
+                </section>
+
+                <section class="checkout__section" id="delivery-address-section" hidden>
+                    <h2 class="checkout__section-title">Delivery address</h2>
+                    <div class="form-inline">
+                        <input class="form-input" type="text" id="address"
+                               th:field="*{address}" placeholder="123 Main St">
+                        <button class="btn btn-secondary" type="button" id="quote-btn">
+                            Quote
+                        </button>
+                    </div>
+                    <p class="text-muted mt-2" id="quote-result"></p>
+                    <input type="hidden" th:field="*{deliveryFeeCents}" id="delivery-fee-cents">
+                </section>
+
+            </form>
+        </div>
+
+        <!-- RIGHT: order summary (sticky) -->
+        <aside class="order-summary">
+            <h2 class="order-summary__title">Your order</h2>
+
+            <div th:each="line : ${cart.lines}" class="order-summary__line">
+                <span class="order-summary__line-name" th:text="${line.name}">Item</span>
+                <div class="order-summary__line-qty-controls">
+                    <form th:action="@{/cart/update}" method="post">
+                        <input type="hidden" name="menuItemId" th:value="${line.menuItemId}">
+                        <input type="hidden" name="quantity" th:value="${line.quantity - 1}">
+                        <button class="btn-icon btn-icon-sm" type="submit"
+                                aria-label="Decrease quantity">−</button>
+                    </form>
+                    <span class="order-summary__line-qty" th:text="${line.quantity}">1</span>
+                    <form th:action="@{/cart/update}" method="post">
+                        <input type="hidden" name="menuItemId" th:value="${line.menuItemId}">
+                        <input type="hidden" name="quantity" th:value="${line.quantity + 1}">
+                        <button class="btn-icon btn-icon-sm" type="submit"
+                                aria-label="Increase quantity">+</button>
+                    </form>
+                </div>
+                <span class="order-summary__line-price" th:text="${line.lineTotalDisplay}">$0.00</span>
+                <form th:action="@{/cart/remove}" method="post">
+                    <input type="hidden" name="menuItemId" th:value="${line.menuItemId}">
+                    <button class="order-summary__remove" type="submit"
+                            aria-label="Remove item">✕</button>
+                </form>
+            </div>
+
+            <div class="order-summary__totals">
+                <div class="order-summary__total-row order-summary__total-row--secondary">
+                    <span>Subtotal</span>
+                    <span class="order-summary__total-amount" th:text="${cart.subtotalDisplay}">$0.00</span>
+                </div>
+                <div class="order-summary__total-row order-summary__total-row--secondary">
+                    <span>Tax (est.)</span>
+                    <span class="order-summary__total-amount" id="tax-display">—</span>
+                </div>
+                <div class="order-summary__total-row order-summary__total-row--secondary"
+                     id="delivery-row" hidden>
+                    <span>Delivery</span>
+                    <span class="order-summary__total-amount" id="delivery-display">—</span>
+                </div>
+                <div class="order-summary__total-row order-summary__total-row--grand">
+                    <span>Total</span>
+                    <span class="order-summary__total-amount" id="total-display">—</span>
+                </div>
+            </div>
+
+            <button class="btn btn-primary btn-lg order-summary__pay-btn"
+                    type="submit" form="checkout-form">
+                Pay with card →
+            </button>
+            <p class="order-summary__secured">Secured by Stripe</p>
+        </aside>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<!-- Page-specific JS for fulfillment toggle + delivery quote + live totals.
+     Inline as a non-module script so it runs immediately. -->
+<script th:src="@{/scripts/checkout.js}"
+        th:attr="data-subtotal-cents=${cart.subtotalCents}"></script>
+
+</body>
+</html>
