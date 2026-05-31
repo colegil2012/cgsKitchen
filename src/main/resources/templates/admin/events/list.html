@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title th:text="|Events — ${brand.brandName()} Admin|">Events</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+    </th:block>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="admin">
+    <div class="container">
+        <header class="admin__header">
+            <span class="admin__link">
+                <a th:href="@{/admin}">← Admin</a>
+            </span>
+            <h1 class="admin__title">Events</h1>
+            <p class="text-muted">
+                Each event is one appearance of the food truck. Activate
+                one when you're set up and serving. Recurring events still
+                need a manual activate each week.
+            </p>
+        </header>
+
+        <div th:if="${notice}" class="alert alert-success" th:text="${notice}"></div>
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+        <div class="admin__section">
+            <div class="admin__section-header">
+                <h2 class="admin__section-title">All events</h2>
+                <a class="btn btn-primary" th:href="@{/admin/events/new}">+ New event</a>
+            </div>
+
+            <table class="admin__table" th:if="${!#lists.isEmpty(events)}">
+                <thead>
+                <tr>
+                    <th>Status</th>
+                    <th>Title</th>
+                    <th>Venue</th>
+                    <th>Schedule</th>
+                    <th>Tags</th>
+                    <th style="text-align:right">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="event : ${events}">
+                    <td>
+                        <span class="admin__status admin__status--ok"
+                              th:if="${event.active}">Active</span>
+                        <span class="admin__status"
+                              th:if="${!event.active and event.recurrence == null and event.endAt != null and event.endAt.isBefore(T(java.time.Instant).now())}">Past</span>
+                        <span class="admin__status admin__status--paid"
+                              th:if="${!event.active and event.recurrence == null and (event.endAt == null or !event.endAt.isBefore(T(java.time.Instant).now()))}">Scheduled</span>
+                        <span class="admin__status admin__status--paid"
+                              th:if="${!event.active and event.recurrence != null}">Recurring</span>
+                    </td>
+                    <td>
+                        <a th:href="@{|/admin/events/${event.id}|}" th:text="${event.title}">Title</a>
+                    </td>
+                    <td>
+                        <span th:if="${event.address != null}"
+                              th:text="${event.address.venueName ?: event.address.line1}">Venue</span>
+                    </td>
+                    <td>
+                        <!-- Recurring: show the rule. One-time: show start date. -->
+                        <th:block th:if="${event.recurrence != null}">
+                            <span class="text-mono" style="font-size:var(--fs-xs)"
+                                  th:text="${event.recurrence.describe()}">Tuesdays 5 PM – 10 PM</span>
+                        </th:block>
+                        <th:block th:if="${event.recurrence == null and event.startAt != null}">
+                            <span class="text-mono" style="font-size:var(--fs-xs)"
+                                  th:text="${#temporals.format(event.startAt.atZone(zoneId), 'MMM d, h:mm a')}">May 25, 6:00 PM</span>
+                        </th:block>
+                    </td>
+                    <td>
+                        <span class="admin__chip"
+                              th:each="tag : ${event.tags}"
+                              th:text="${tag.name().toLowerCase().replace('_', ' ')}">tag</span>
+                    </td>
+                    <td>
+                        <div class="admin__row-actions">
+                            <form th:if="${!event.active}"
+                                  th:action="@{|/admin/events/${event.id}/activate|}"
+                                  method="post" style="display:inline">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button class="btn btn-sm btn-primary" type="submit">Activate</button>
+                            </form>
+                            <form th:if="${event.active}"
+                                  th:action="@{|/admin/events/${event.id}/deactivate|}"
+                                  method="post" style="display:inline">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button class="btn btn-sm btn-secondary" type="submit">Deactivate</button>
+                            </form>
+                            <a class="btn btn-sm btn-secondary"
+                               th:href="@{|/admin/events/${event.id}|}">Edit</a>
+                            <form th:action="@{|/admin/events/${event.id}/delete|}"
+                                  method="post" style="display:inline"
+                                  onsubmit="return confirm('Delete this event?');">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button class="btn btn-sm btn-ghost" type="submit">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <div th:if="${#lists.isEmpty(events)}" style="text-align:center; padding: var(--space-12) 0;">
+                <p class="text-muted" style="margin-bottom: var(--space-6);">No events yet.</p>
+                <a class="btn btn-primary" th:href="@{/admin/events/new}">Create your first event</a>
+            </div>
+        </div>
+
+        <nav class="admin__pagination" th:if="${totalPages > 1}">
+            <a th:if="${currentPage > 0}"
+               th:href="@{/admin/events(page=${currentPage - 1})}"
+               class="btn btn-sm btn-secondary">← Prev</a>
+            <span class="text-mono" style="font-size: var(--fs-xs); color: var(--color-muted);">
+                Page <span th:text="${currentPage + 1}">1</span> of <span th:text="${totalPages}">1</span>
+            </span>
+            <a th:if="${currentPage + 1 < totalPages}"
+               th:href="@{/admin/events(page=${currentPage + 1})}"
+               class="btn btn-sm btn-secondary">Next →</a>
+        </nav>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

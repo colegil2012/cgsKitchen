@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title th:text="|Contact — ${brand.brandName()}|">Contact</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/about-contact.css}">
+    </th:block>
+</head>
+
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="content-page">
+    <div class="content-page__inner">
+        <h1 class="content-page__title">
+            Get in <em>touch.</em>
+        </h1>
+
+        <!--
+          Each card is a split: brown label band on the left, value on
+          the right. The "Find us" card has three states:
+            currentEvent → "Open now" + venue + full address + hours
+            nextEvent    → "Next event" + venue + full address + date+hours
+            neither      → "Off the road"
+        -->
+        <div class="contact-info">
+
+            <!-- ===== Find us card ===== -->
+            <div class="contact-info__card">
+                <div class="contact-info__label">
+                    <th:block th:if="${currentEvent != null}">Open now</th:block>
+                    <th:block th:if="${currentEvent == null and nextEvent != null}">Next event</th:block>
+                    <th:block th:if="${currentEvent == null and nextEvent == null}">Find us</th:block>
+                </div>
+
+                <div class="contact-info__body">
+                    <th:block th:if="${currentEvent != null}"
+                              th:with="zone=${T(java.time.ZoneId).of(brand.timezone() ?: 'America/New_York')}">
+                        <div class="contact-info__value">
+                            <span th:text="${currentEvent.address != null and currentEvent.address.venueName != null
+                                ? currentEvent.address.venueName
+                                : currentEvent.title}">Venue</span>
+                        </div>
+                        <div class="contact-info__sub" th:if="${currentEvent.address != null}">
+                            <span th:text="${currentEvent.address.line1}">Street</span><br>
+                            <span th:text="${currentEvent.address.city + ', ' + currentEvent.address.state + ' ' + currentEvent.address.postalCode}">City, State ZIP</span>
+                        </div>
+                        <div class="contact-info__sub">
+                            <span th:text="${#temporals.format(currentEvent.startAt.atZone(zone), 'h:mm a')}">6:00 PM</span>
+                            –
+                            <span th:text="${#temporals.format(currentEvent.endAt.atZone(zone), 'h:mm a')}">10:00 PM</span>
+                        </div>
+                    </th:block>
+
+                    <th:block th:if="${currentEvent == null and nextEvent != null}"
+                              th:with="zone=${T(java.time.ZoneId).of(brand.timezone() ?: 'America/New_York')}">
+                        <div class="contact-info__value">
+                            <span th:text="${nextEvent.address != null and nextEvent.address.venueName != null
+                                ? nextEvent.address.venueName
+                                : nextEvent.title}">Venue</span>
+                        </div>
+                        <div class="contact-info__sub" th:if="${nextEvent.address != null}">
+                            <span th:text="${nextEvent.address.line1}">Street</span><br>
+                            <span th:text="${nextEvent.address.city + ', ' + nextEvent.address.state + ' ' + nextEvent.address.postalCode}">City, State ZIP</span>
+                        </div>
+                        <div class="contact-info__sub">
+                            <span th:text="${#temporals.format(nextEvent.startAt.atZone(zone), 'EEE MMM d')}">Sat May 25</span>,
+                            <span th:text="${#temporals.format(nextEvent.startAt.atZone(zone), 'h:mm a')}">6:00 PM</span>
+                            –
+                            <span th:text="${#temporals.format(nextEvent.endAt.atZone(zone), 'h:mm a')}">10:00 PM</span>
+                        </div>
+                    </th:block>
+
+                    <th:block th:if="${currentEvent == null and nextEvent == null}">
+                        <div class="contact-info__value">Off the road</div>
+                        <div class="contact-info__sub">
+                            Check Instagram for our next stop.
+                        </div>
+                    </th:block>
+                </div>
+            </div>
+
+            <!-- ===== Email card ===== -->
+            <div class="contact-info__card">
+                <div class="contact-info__label">Email</div>
+                <div class="contact-info__body">
+                    <a class="contact-info__value"
+                       th:href="'mailto:' + ${brand.contactEmail()}"
+                       th:text="${brand.contactEmail()}">email</a>
+                </div>
+            </div>
+
+            <!-- ===== Phone card ===== -->
+            <div class="contact-info__card">
+                <div class="contact-info__label">Phone</div>
+                <div class="contact-info__body">
+                    <a class="contact-info__value"
+                       th:href="'tel:' + ${brand.contactPhone()}"
+                       th:text="${brand.contactPhone()}">phone</a>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="content-page__prose text-center">
+            <p>
+                For catering or large orders, email is fastest. Otherwise,
+                come find us — we're easier to chat with in person, with a
+                taco in hand.
+            </p>
+            <th:block th:if="${brand.instagramUrl() != null}">
+                <p>
+                    <a class="btn btn-primary"
+                       th:href="${brand.instagramUrl()}"
+                       target="_blank" rel="noopener">
+                        Follow us on Instagram →
+                    </a>
+                </p>
+            </th:block>
+            <th:block th:if="${brand.facebookUrl() != null}">
+                <p>
+                    <a class="btn btn-primary"
+                       th:href="${brand.facebookUrl()}"
+                       target="_blank" rel="noopener">
+                        Follow us on Facebook →
+                    </a>
+                </p>
+            </th:block>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

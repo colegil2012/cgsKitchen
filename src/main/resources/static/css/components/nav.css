@@ -1,21 +1,36 @@
 /* ==========================================================================
    Site navigation
+   --------------------------------------------------------------------------
+   The nav is FIXED positioned (not sticky) so it stays at the top of
+   the viewport regardless of body layout. The event banner above it
+   (when present) is also part of this fixed stack — see .site-nav-wrap.
+
+   Content below relies on the --sticky-offset token (defined in
+   tokens.css) for its padding-top. See reset.css for the body padding
+   rule that gives the fixed nav its space.
    ========================================================================== */
 
-.site-nav {
-    position: sticky;
+.site-nav-wrap {
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: var(--z-nav);
+}
+
+.site-nav {
+    /* Explicit height so the --site-nav-height token always matches reality */
+    height: var(--site-nav-height);
     background-color: rgba(250, 240, 218, 0.92);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--color-border);
-    padding-block: var(--space-4);
 }
 
 .site-nav__inner {
     width: 100%;
     max-width: var(--container-max);
+    height: 100%;
     margin-inline: auto;
     padding-inline: var(--space-6);
     display: flex;
@@ -30,11 +45,14 @@
     color: var(--color-ink);
     text-decoration: none;
     letter-spacing: -0.02em;
+    flex-shrink: 0;
 }
 
 .site-nav__brand-dot {
     color: var(--color-gold-dark);
 }
+
+/* ----- Links container (desktop horizontal, mobile dropdown) ----- */
 
 .site-nav__links {
     display: flex;
@@ -44,6 +62,8 @@
     font-size: var(--fs-sm);
     text-transform: uppercase;
     letter-spacing: 0.1em;
+    flex: 1;
+    justify-content: flex-end;
 }
 
 .site-nav__link {
@@ -52,6 +72,7 @@
     padding-block: var(--space-2);
     border-bottom: 2px solid transparent;
     transition: border-color var(--duration-fast) ease;
+    white-space: nowrap;
 }
 
 .site-nav__link:hover {
@@ -62,6 +83,22 @@
 .site-nav__link.active {
     border-bottom-color: var(--color-gold-dark);
 }
+
+.site-nav__logout-form {
+    margin: 0;
+    display: inline;
+}
+
+.site-nav__logout {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+}
+
+/* ----- Cart button (always visible) ----- */
 
 .site-nav__cart-btn {
     display: inline-flex;
@@ -76,6 +113,7 @@
     font-weight: 700;
     text-decoration: none;
     transition: background-color var(--duration-fast) ease;
+    flex-shrink: 0;
 }
 
 .site-nav__cart-btn:hover {
@@ -99,14 +137,136 @@
 
 .site-nav__cart-btn:hover .site-nav__cart-count {
     background-color: var(--color-paper);
-    color: var(--color-salsa);
+    color: var(--color-orange);
 }
 
-/* ----- Mobile ----- */
-@media (max-width: 700px) {
-    .site-nav__links {
-        display: none;
+/* ----- Hamburger toggle (mobile only) -----
+   CSS-only pattern: hidden checkbox holds state, label is the button,
+   ~ sibling selector reveals the menu when checked. */
+
+.site-nav__toggle {
+    /* The hidden checkbox. Stays at zero size but accessible. */
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 0;
+    height: 0;
+}
+
+.site-nav__hamburger {
+    /* Visible button (label). Hidden on desktop, shown on mobile. */
+    display: none;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    position: relative;
+    border-radius: var(--radius-sm);
+    transition: background-color var(--duration-fast) ease;
+}
+
+.site-nav__hamburger:hover {
+    background-color: var(--color-paper-2);
+}
+
+.site-nav__hamburger-line {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    height: 2px;
+    background-color: var(--color-ink);
+    border-radius: 1px;
+    transition:
+            transform var(--duration-base) var(--ease-out),
+            opacity var(--duration-fast) ease,
+            top var(--duration-base) var(--ease-out);
+}
+
+.site-nav__hamburger-line:nth-child(1) { top: 12px; }
+.site-nav__hamburger-line:nth-child(2) { top: 19px; }
+.site-nav__hamburger-line:nth-child(3) { top: 26px; }
+
+/* When toggled open, the hamburger becomes an X */
+.site-nav__toggle:checked ~ .site-nav__hamburger .site-nav__hamburger-line:nth-child(1) {
+    top: 19px;
+    transform: rotate(45deg);
+}
+.site-nav__toggle:checked ~ .site-nav__hamburger .site-nav__hamburger-line:nth-child(2) {
+    opacity: 0;
+}
+.site-nav__toggle:checked ~ .site-nav__hamburger .site-nav__hamburger-line:nth-child(3) {
+    top: 19px;
+    transform: rotate(-45deg);
+}
+
+/* ----- Mobile breakpoint -----
+   Below 800px: links collapse into a dropdown, hamburger appears,
+   cart stays visible to the right of the hamburger. */
+
+@media (max-width: 800px) {
+    .site-nav__hamburger {
+        display: inline-block;
+        order: 2;          /* hamburger sits between brand and cart */
     }
+
+    .site-nav__cart-btn {
+        order: 3;          /* cart on the far right */
+    }
+
+    /* Links collapse into a dropdown panel anchored below the nav */
+    .site-nav__links {
+        order: 4;          /* takes full width below the row */
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        align-items: stretch;
+        background-color: var(--color-paper);
+        border-bottom: 1px solid var(--color-border);
+        box-shadow: var(--shadow-md);
+        padding: var(--space-4) var(--space-6);
+        gap: var(--space-2);
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        pointer-events: none;
+        transition:
+                max-height var(--duration-base) var(--ease-out),
+                opacity var(--duration-fast) ease;
+    }
+
+    .site-nav__toggle:checked ~ .site-nav__links {
+        max-height: 80vh;
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .site-nav__link {
+        padding-block: var(--space-3);
+        border-bottom: 1px solid var(--color-border);
+        border-radius: 0;
+        font-size: var(--fs-base);
+        width: 100%;
+    }
+
+    .site-nav__link:hover {
+        background-color: var(--color-paper-2);
+        border-bottom-color: var(--color-border);
+    }
+
+    .site-nav__link:last-of-type,
+    .site-nav__logout-form:last-of-type .site-nav__link {
+        border-bottom: none;
+    }
+
+    .site-nav__logout-form {
+        width: 100%;
+    }
+    .site-nav__logout-form .site-nav__link {
+        text-align: left;
+    }
+
     .site-nav__brand {
         font-size: var(--fs-xl);
     }

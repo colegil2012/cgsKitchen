@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title th:text="|Order placed — ${brand.brandName()}|">Order placed</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/checkout.css}">
+    </th:block>
+</head>
+
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container">
+    <div class="order-confirm">
+        <img class="order-confirm__logo"
+             th:src="${imageUrls.resolve(brand.images() != null ? brand.images().logoPath() : '/images/logo.png')}"
+             th:alt="${brand.brandName()}">
+
+        <h1 class="order-confirm__title">Order placed!</h1>
+
+        <!--
+          Ready-time copy. Window: promisedReadyAt to +6 min.
+          Display varies by fulfillment type:
+            PICKUP   → "Ready for pickup between X – Y"
+            DELIVERY → "Ready for courier between X – Y"
+                       (Uber will text the customer once it's en route)
+          Three sub-states per type:
+            window in future → show range
+            window passed    → "should be ready any minute" / courier variant
+            null/missing     → static fallback copy
+        -->
+        <th:block th:if="${order != null and order.promisedReadyAt != null}"
+                  th:with="zone=${T(java.time.ZoneId).of(brand.timezone() ?: 'America/New_York')},
+                           windowEnd=${order.promisedReadyAt.plusSeconds(360)},
+                           now=${T(java.time.Instant).now()},
+                           isDelivery=${order.fulfillment != null and order.fulfillment.name().equals('DELIVERY')}">
+
+            <!-- Window is still in the future, or we're inside it -->
+            <p class="order-confirm__lede" th:if="${windowEnd.isAfter(now)}">
+                <th:block th:if="${isDelivery}">
+                    We're firing up the grill. Ready for courier between
+                </th:block>
+                <th:block th:if="${!isDelivery}">
+                    We're firing up the grill. Ready for pickup between
+                </th:block>
+                <strong>
+                    <span th:text="${#temporals.format(order.promisedReadyAt.atZone(zone), 'h:mm')}">6:42</span>
+                    –
+                    <span th:text="${#temporals.format(windowEnd.atZone(zone), 'h:mm a')}">6:48 PM</span>
+                </strong>.
+                <span class="order-confirm__lede-sub" th:if="${isDelivery}">
+                    You'll get a text from Uber when your courier picks up.
+                </span>
+            </p>
+
+            <!-- Window already passed -->
+            <p class="order-confirm__lede" th:if="${!windowEnd.isAfter(now)}">
+                <th:block th:if="${isDelivery}">
+                    Your order should be heading out any minute — watch for
+                    a text from Uber with courier tracking.
+                </th:block>
+                <th:block th:if="${!isDelivery}">
+                    Your order should be ready any minute now — come on by.
+                </th:block>
+            </p>
+        </th:block>
+
+        <!-- Null promisedReadyAt fallback -->
+        <p class="order-confirm__lede"
+           th:if="${order == null or order.promisedReadyAt == null}">
+            We're firing up the grill. You'll get an email confirmation
+            shortly — usually 12 to 18 minutes until ready.
+        </p>
+
+        <p class="order-confirm__mock-notice" th:if="${mock}">
+            (mock checkout — Stripe was not contacted)
+        </p>
+
+        <p class="order-confirm__ref" th:if="${order != null}">
+            Reference: <span th:text="${order.id}">id</span>
+        </p>
+
+        <a class="btn btn-primary btn-lg" th:href="@{/menu}">Order another →</a>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

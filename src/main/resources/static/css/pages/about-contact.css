@@ -33,37 +33,95 @@
     margin-top: var(--space-5);
 }
 
-/* Contact info grid */
+/* ----- Contact info stack -----
+   Each card is a two-column split: a brown label band on the left
+   (~30% width) and the value content on the right. Cards size to
+   their content vertically so the event card can be taller than
+   email/phone without forcing them to grow. */
+
 .contact-info {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
     margin-block: var(--space-12);
 }
 
-@media (min-width: 700px) {
-    .contact-info { grid-template-columns: repeat(3, 1fr); }
-}
-
 .contact-info__card {
-    text-align: center;
-    padding: var(--space-6);
-    background-color: var(--color-paper);
+    display: grid;
+    grid-template-columns: minmax(120px, 30%) 1fr;
+    overflow: hidden;
+    background-color: var(--color-white);
     border: 1px solid var(--color-brown-dark);
     box-shadow: var(--shadow-sm);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-md);
+    min-height: 88px;
 }
 
 .contact-info__label {
+    /* Brown left band, centered label text. */
+    background-color: var(--color-brown-dark);
+    color: var(--color-paper);
     font-family: var(--font-mono);
     font-size: var(--fs-xs);
     text-transform: uppercase;
     letter-spacing: 0.15em;
-    color: var(--color-muted);
-    margin-bottom: var(--space-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--space-4) var(--space-3);
+    margin-bottom: 0;  /* override the old block-flow margin */
+}
+
+.contact-info__body {
+    /* Right side — content area. Left-aligned text, generous padding. */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--space-1);
+    padding: var(--space-5) var(--space-6);
 }
 
 .contact-info__value {
     font-family: var(--font-display);
     font-size: var(--fs-xl);
+    line-height: var(--lh-snug);
+    text-align: left;
+}
+
+/* When the value is a link (email/phone), pick up the gold link color
+   from typography.css. No override needed — just here for reference. */
+a.contact-info__value {
+    /* inherits anchor color from typography.css */
+    text-decoration: none;
+}
+
+a.contact-info__value:hover {
+    color: var(--color-gold-darker);
+}
+
+.contact-info__sub {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-muted);
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+}
+
+.contact-info__sub + .contact-info__sub {
+    margin-top: var(--space-1);
+}
+
+/* On very narrow screens, stack the label above the content rather
+   than holding a narrow column. */
+@media (max-width: 500px) {
+    .contact-info__card {
+        grid-template-columns: 1fr;
+    }
+    .contact-info__label {
+        padding-block: var(--space-2);
+    }
+    .contact-info__body {
+        padding: var(--space-4) var(--space-5);
+    }
 }

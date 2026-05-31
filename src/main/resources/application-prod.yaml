@@ -1,0 +1,34 @@
+# =============================================================================
+# cgsKitchen — production profile overrides.
+# Activate with SPRING_PROFILES_ACTIVE=prod
+#
+# This file ONLY overrides the dev-friendly defaults in application.yaml.
+# Anything not mentioned here inherits from the base file. Keep the
+# override list small and intentional.
+# =============================================================================
+
+spring:
+  thymeleaf:
+    cache: ${THYMELEAF_CACHE:true}
+  web:
+    resources:
+      cache:
+        # 1 year, matches the immutable-asset convention. If you change
+        # this, also make sure /css and /scripts URLs are versioned so
+        # cache busts work.
+        period: ${STATIC_RESOURCE_CACHE:31536000}
+
+# Tighter logging — DEBUG floods prod logs and leaks request headers
+# from Spring Security.
+logging:
+  level:
+    root: INFO
+    com.celtech.solutions.cgsKitchen: INFO
+    org.springframework.security: WARN
+    org.springframework.security.web: WARN
+
+app:
+  cookies:
+    secure: ${COOKIE_SECURE:true}
+  checkout:
+    debug-js: ${CHECKOUT_DEBUG_JS:false}

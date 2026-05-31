@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title th:text="|Menu — ${brand.brandName()}|">Menu</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/menu.css}">
+    </th:block>
+</head>
+
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main>
+    <header class="menu-page__header">
+        <div class="container">
+            <span class="stamp text-muted">The menu</span>
+            <h1 class="menu-page__title">
+                Top O' the Mornin' <em>to ya, Laddie.</em>
+            </h1>
+            <p class="text-muted">Tap any item to add it to your cart.</p>
+        </div>
+    </header>
+
+    <!-- Sticky category navigation -->
+    <nav class="menu-page__nav">
+        <div class="menu-page__nav-inner">
+            <a class="menu-page__category-link"
+               th:each="entry : ${menuByCategory}"
+               th:href="'#' + ${entry.key.id}"
+               th:text="${entry.key.name}">category</a>
+        </div>
+    </nav>
+
+    <!-- Flash message after cart add -->
+    <div class="container mt-6" th:if="${addedItem}">
+        <div class="alert alert-success">
+            <span>✓</span>
+            <span>Added <strong th:text="${addedItem}">item</strong> to your cart.</span>
+        </div>
+    </div>
+    <div class="container mt-6" th:if="${error}">
+        <div class="alert alert-error" th:text="${error}">error</div>
+    </div>
+
+    <!-- Categorized item lists -->
+    <th:block th:each="entry : ${menuByCategory}">
+        <section class="menu-category" th:id="${entry.key.id}">
+            <div class="container">
+                <header class="menu-category__heading">
+                    <h2 class="menu-category__title" th:text="${entry.key.name}">Category</h2>
+                </header>
+                <div class="menu-category__grid">
+                    <article class="menu-card"
+                             th:each="item : ${entry.value}"
+                             th:id="${item.id}"
+                             th:classappend="${!item.available} ? 'menu-card--unavailable'">
+
+                        <form th:action="@{/cart/add}" method="post"
+                              class="menu-card__form"
+                              th:attr="data-base-cents=${item.priceCents}">
+                            <input type="hidden" name="menuItemId" th:value="${item.id}">
+                            <input type="hidden" name="quantity" value="1">
+
+                            <div class="menu-card__body">
+                                <div class="menu-card__header">
+                                    <div class="menu-card__heading">
+                                        <h3 class="menu-card__name" th:text="${item.name}">Name</h3>
+                                        <span class="menu-card__badge"
+                                              th:if="${item.badgeLabel != null}"
+                                              th:classappend="${'menu-card__badge--' + item.badgeColor}"
+                                              th:text="${item.badgeLabel}">Badge</span>
+                                    </div>
+                                    <button type="submit"
+                                            class="menu-card__add"
+                                            th:aria-label="|Add ${item.name} to cart|">+</button>
+                                </div>
+
+                                <p class="menu-card__description" th:text="${item.description}">Desc</p>
+
+                                <div class="menu-card__price">
+                                        <span class="menu-card__price-total"
+                                              th:text="${item.priceDisplay}">$0.00</span>
+                                    <span class="menu-card__price-live" hidden></span>
+                                </div>
+                            </div>
+
+                            <!-- Customize row + panel only rendered when there are options. -->
+                            <th:block th:if="${item.optionGroups != null and !item.optionGroups.isEmpty()}">
+                                <div class="menu-card__options-bar">
+                                    <button type="button"
+                                            class="menu-card__options-toggle"
+                                            aria-expanded="false"
+                                            th:attr="aria-controls=|opts-${item.id}|">
+                                        <span class="menu-card__options-toggle-label">Customize</span>
+                                        <span class="menu-card__chevron" aria-hidden="true">▾</span>
+                                    </button>
+                                </div>
+
+                                <div class="menu-card__options"
+                                     th:id="|opts-${item.id}|"
+                                     hidden>
+                                    <div class="menu-card__option-group"
+                                         th:each="group : ${item.optionGroups}">
+
+                                        <!-- SINGLE → dropdown -->
+                                        <th:block th:if="${group.selectionType.name() == 'SINGLE'}">
+                                            <label class="form-label"
+                                                   th:for="${item.id + '-' + group.id}"
+                                                   th:text="${group.label}">Choose</label>
+                                            <select class="form-input"
+                                                    th:id="${item.id + '-' + group.id}"
+                                                    th:name="'opt_' + ${group.id}">
+                                                <option th:unless="${group.required}" value=""
+                                                        data-delta="0">— none —</option>
+                                                <option th:each="choice : ${group.choices}"
+                                                        th:if="${choice.available}"
+                                                        th:value="${choice.id}"
+                                                        th:attr="data-delta=${choice.priceDeltaCents}"
+                                                        th:selected="${choice.defaultChoice}"
+                                                        th:text="${choice.priceDeltaCents == 0
+                                                                    ? choice.label
+                                                                    : choice.label + ' (' + (choice.priceDeltaCents > 0 ? '+' : '-')
+                                                                      + '$' + #numbers.formatDecimal(
+                                                                            (choice.priceDeltaCents < 0
+                                                                                ? -choice.priceDeltaCents
+                                                                                : choice.priceDeltaCents) / 100.0, 1, 2) + ')'}">
+                                                    Choice
+                                                </option>
+                                            </select>
+                                        </th:block>
+
+                                        <!-- MULTI → checkboxes -->
+                                        <th:block th:if="${group.selectionType.name() == 'MULTI'}">
+                                            <span class="form-label" th:text="${group.label}">Add-ons</span>
+                                            <div class="menu-card__checkboxes">
+                                                <label class="menu-card__checkbox"
+                                                       th:each="choice : ${group.choices}"
+                                                       th:classappend="${!choice.available} ? 'menu-card__checkbox--out'">
+                                                    <input type="checkbox"
+                                                           th:name="'opt_' + ${group.id} + '[]'"
+                                                           th:value="${choice.id}"
+                                                           th:attr="data-delta=${choice.priceDeltaCents}"
+                                                           th:checked="${choice.available and choice.defaultChoice}"
+                                                           th:disabled="${!choice.available}">
+                                                    <span th:text="${choice.priceDeltaCents == 0
+                                                                    ? choice.label
+                                                                    : choice.label + ' (' + (choice.priceDeltaCents > 0 ? '+' : '-')
+                                                                      + '$' + #numbers.formatDecimal(
+                                                                            (choice.priceDeltaCents < 0
+                                                                                ? -choice.priceDeltaCents
+                                                                                : choice.priceDeltaCents) / 100.0, 1, 2) + ')'}">Choice</span>
+                                                    <span class="menu-card__checkbox-out"
+                                                          th:if="${!choice.available}">Out</span>
+                                                </label>
+                                            </div>
+                                        </th:block>
+                                    </div>
+                                </div>
+                            </th:block>
+                        </form>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </th:block>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<script th:src="@{/scripts/menu-price-update.js}"></script>
+
+
+</body>
+</html>

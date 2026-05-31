@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title th:text="|Sign in — ${brand.brandName()}|">Sign in</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/auth.css}">
+    </th:block>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="auth">
+    <div class="auth__card">
+        <header class="auth__header">
+            <span class="stamp text-muted">Welcome back</span>
+            <h1 class="auth__title">Sign in</h1>
+        </header>
+
+        <div class="alert alert-success" th:if="${notice}" th:text="${notice}">notice</div>
+        <div class="alert alert-error"   th:if="${error}"  th:text="${error}">error</div>
+
+        <form th:action="@{/login}" method="post" class="auth__form">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <div class="form-field">
+                <label class="form-label" for="email">Email</label>
+                <input class="form-input" type="email" id="email" name="email"
+                       required autofocus autocomplete="email">
+            </div>
+
+            <div class="form-field">
+                <label class="form-label" for="password">Password</label>
+                <input class="form-input" type="password" id="password" name="password"
+                       required autocomplete="current-password">
+            </div>
+
+            <button class="btn btn-primary btn-lg auth__submit" type="submit">Sign in →</button>
+
+            <p class="auth__alt">
+                New here? <a th:href="@{/register}">Create an account</a>
+            </p>
+        </form>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

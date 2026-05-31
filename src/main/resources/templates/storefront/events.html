@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title th:text="|Events — ${brand.brandName()}|">Events</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/events.css}">
+    </th:block>
+</head>
+
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="events-page">
+    <div class="events-page__inner">
+        <header class="events-page__header">
+            <h1 class="events-page__title">
+                Find <em>us.</em>
+            </h1>
+            <p class="events-page__subtitle">
+                Where the truck is parked, when. Recurring stops repeat
+                weekly — one-off events show up at their specific date.
+            </p>
+        </header>
+
+        <!--
+          Empty state — nothing in the next 60 days. Either we're truly
+          off the road, or no events have been scheduled yet.
+        -->
+        <div th:if="${#maps.isEmpty(weeksOfOccurrences)}" class="events-empty">
+            <p class="events-empty__title">Off the road right now.</p>
+            <p class="events-empty__sub">
+                Check back soon, or follow us on Instagram for last-minute stops.
+            </p>
+            <a class="btn btn-primary"
+               th:if="${brand.instagramUrl() != null}"
+               th:href="${brand.instagramUrl()}"
+               target="_blank" rel="noopener">Follow on Instagram →</a>
+        </div>
+
+        <!--
+          Weeks. Each entry is (weekStart Monday → list of occurrences).
+          We render the week header from weekStart and weekStart+6.
+        -->
+        <th:block th:each="week : ${weeksOfOccurrences}">
+            <section class="events-week">
+                <h2 class="events-week__header">
+                    <span th:text="${#temporals.format(week.key, 'MMM d')}">Sep 1</span>
+                    –
+                    <span th:text="${#temporals.format(week.key.plusDays(6), 'MMM d')}">Sep 7</span>
+                </h2>
+
+                <ul class="events-list">
+                    <li class="events-list__item"
+                        th:each="occ : ${week.value}"
+                        th:classappend="${occ.recurring} ? ' events-list__item--recurring' : ''">
+
+                        <!-- Date column — day-of-week + numeric day -->
+                        <div class="events-list__date">
+                            <div class="events-list__date-dow"
+                                 th:text="${#temporals.format(occ.date, 'EEE')}">Tue</div>
+                            <div class="events-list__date-num"
+                                 th:text="${#temporals.format(occ.date, 'd')}">3</div>
+                            <div class="events-list__date-mon"
+                                 th:text="${#temporals.format(occ.date, 'MMM')}">Sep</div>
+                        </div>
+
+                        <!-- Body — venue, address, hours, recurring badge -->
+                        <div class="events-list__body">
+                            <div class="events-list__title-row">
+                                <h3 class="events-list__title"
+                                    th:text="${occ.event.address != null and occ.event.address.venueName != null
+                                        ? occ.event.address.venueName
+                                        : occ.event.title}">Venue</h3>
+                                <span class="events-list__badge"
+                                      th:if="${occ.recurring}">Weekly</span>
+                            </div>
+
+                            <div class="events-list__address"
+                                 th:if="${occ.event.address != null}">
+                                <span th:text="${occ.event.address.line1}">Street</span><br>
+                                <span th:text="${occ.event.address.city + ', ' + occ.event.address.state + ' ' + occ.event.address.postalCode}">City, State ZIP</span>
+                            </div>
+
+                            <div class="events-list__hours">
+                                <span th:text="${#temporals.format(occ.startAt.atZone(zoneId), 'h:mm a')}">5:00 PM</span>
+                                –
+                                <span th:text="${#temporals.format(occ.endAt.atZone(zoneId), 'h:mm a')}">10:00 PM</span>
+                            </div>
+
+                            <p class="events-list__description"
+                               th:if="${occ.event.description != null and !#strings.isEmpty(occ.event.description)}"
+                               th:text="${occ.event.description}">Description</p>
+                        </div>
+                    </li>
+                </ul>
+            </section>
+        </th:block>
+
+        <p class="events-page__footnote" th:if="${!#maps.isEmpty(weeksOfOccurrences)}">
+            Showing the next <span th:text="${horizonDays}">60</span> days.
+            Schedule subject to change — check Instagram for last-minute updates.
+        </p>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="en">
 <!--
   Layout fragment.
   Use:  <html th:replace="~{fragments/layout :: layout(~{::title}, ~{::section})}">
@@ -8,6 +10,8 @@
 <head th:fragment="head(title, pageStylesheets)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <title th:replace="${title}">Site</title>
 
     <!-- Web fonts. In production self-host with Fontsource. -->
@@ -30,31 +34,98 @@
     <link rel="stylesheet" th:href="@{/css/components/menu-card.css}">
     <link rel="stylesheet" th:href="@{/css/components/form.css}">
     <link rel="stylesheet" th:href="@{/css/components/alert.css}">
+    <link rel="stylesheet" th:href="@{/css/components/event-banner.css}">
 
     <!-- Page-specific stylesheets, contributed by the consuming template -->
     <th:block th:replace="${pageStylesheets}"></th:block>
 </head>
 
-<body th:fragment="body(content)">
+<!--
+  data-event-active is set when an event is currently open. CSS reads
+  this in tokens.css to shift sticky elements down by the banner height.
+  Without this attribute, sticky elements sit immediately under the nav.
+-->
+<body th:fragment="body(content)"
+      th:attr="data-event-active=${currentEvent != null}">
 
 <!-- Site nav -->
-<nav class="site-nav" th:fragment="nav">
-    <div class="site-nav__inner">
-        <a class="site-nav__brand" th:href="@{/}">
-            <span th:text="${brand.brandName()}">Brand</span><span class="site-nav__brand-dot">.</span>
-        </a>
+<nav th:fragment="nav" class="site-nav-wrap">
+    <!--
+      Event banner — sits above the nav, only renders when an event is
+      currently open (active flag AND now ∈ [startAt, endAt]).
+      Both `currentEvent` and `nextEvent` are injected by
+      GlobalModelAttributes (60-second cache).
+    -->
+    <div th:if="${currentEvent != null}" class="event-banner event-banner--active">
+        <div class="event-banner__inner">
+            <span class="event-banner__indicator" aria-hidden="true"></span>
+            <span class="event-banner__label">Open now</span>
+            <span class="event-banner__divider" aria-hidden="true">·</span>
+            <span class="event-banner__where"
+                  th:text="${currentEvent.address != null
+                      ? currentEvent.address.toSingleLine()
+                      : currentEvent.title}">venue</span>
+            <span class="event-banner__divider" aria-hidden="true">·</span>
+            <span class="event-banner__hours">
+                <span th:text="${#temporals.format(currentEvent.startAt.atZone(T(java.time.ZoneId).of(brand.timezone() ?: 'America/New_York')), 'h:mm a')}">6:00 PM</span>
+                –
+                <span th:text="${#temporals.format(currentEvent.endAt.atZone(T(java.time.ZoneId).of(brand.timezone() ?: 'America/New_York')), 'h:mm a')}">10:00 PM</span>
+            </span>
+        </div>
+    </div>
 
-        <ul class="site-nav__links">
-            <li><a class="site-nav__link" th:href="@{/menu}">Menu</a></li>
-            <li><a class="site-nav__link" th:href="@{/about}">About</a></li>
-            <li><a class="site-nav__link" th:href="@{/contact}">Contact</a></li>
-        </ul>
+    <div class="site-nav">
+        <div class="site-nav__inner">
+            <a class="site-nav__brand" th:href="@{/}">
+                <span th:text="${brand.brandName()}">Brand</span><span class="site-nav__brand-dot">.</span>
+            </a>
 
-        <a class="site-nav__cart-btn" th:href="@{/checkout}"
-           th:if="${cart.itemCount > 0}">
-            <span>Cart</span>
-            <span class="site-nav__cart-count" th:text="${cart.itemCount}">0</span>
-        </a>
+            <!--
+              CSS-only mobile menu toggle. The hidden checkbox holds the
+              state, the label is the visible hamburger button, and CSS
+              sibling selectors show the menu when the checkbox is checked.
+              No JS required.
+            -->
+            <input type="checkbox" id="site-nav-toggle" class="site-nav__toggle"
+                   aria-hidden="true">
+            <label for="site-nav-toggle" class="site-nav__hamburger" aria-label="Toggle menu">
+                <span class="site-nav__hamburger-line"></span>
+                <span class="site-nav__hamburger-line"></span>
+                <span class="site-nav__hamburger-line"></span>
+            </label>
+
+            <div class="site-nav__links">
+                <a class="site-nav__link" th:href="@{/menu}">Menu</a>
+                <a class="site-nav__link" th:href="@{/events}">Events</a>
+                <a class="site-nav__link" th:href="@{/contact}">Contact</a>
+                <a class="site-nav__link" th:href="@{/about}">About</a>
+
+                <a class="site-nav__link" th:href="@{/login}"
+                   sec:authorize="!isAuthenticated()">Sign in</a>
+
+                <a class="site-nav__link" th:href="@{/account}"
+                   sec:authorize="isAuthenticated()">My account</a>
+
+                <a class="site-nav__link" th:href="@{/admin}"
+                   sec:authorize="hasRole('ADMIN')">Admin</a>
+
+                <form th:action="@{/logout}" method="post" class="site-nav__logout-form"
+                      sec:authorize="isAuthenticated()">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="site-nav__link site-nav__logout">Sign out</button>
+                </form>
+            </div>
+
+            <!--
+              Cart sits OUTSIDE the links container so it remains visible
+              even when the hamburger menu is closed on mobile.
+            -->
+            <a class="site-nav__cart-btn" th:href="@{/checkout}">
+                Cart
+                <span class="site-nav__cart-count" th:if="${cart != null and cart.itemCount > 0}"
+                      th:text="${cart.itemCount}">0</span>
+            </a>
+        </div>
     </div>
 </nav>
 
@@ -68,8 +139,7 @@
             <span th:text="${brand.brandName()}">Brand</span><span class="site-footer__brand-dot">.</span>
         </div>
         <div class="site-footer__meta">
-            © <span th:text="${#dates.year(#dates.createNow())}">2026</span> ·
-            <span th:text="${brand.addressToday()}">Address</span>
+            <span th:text="${#dates.year(#dates.createNow())}">2026</span>
         </div>
         <div class="site-footer__credit">
             Powered by Celtech Solutions

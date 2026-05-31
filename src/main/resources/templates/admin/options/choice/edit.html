@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title>Edit choice — Admin</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+    </th:block>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="admin">
+    <div class="container">
+        <header class="admin__header">
+            <span class="admin__link">
+                <a th:href="@{/admin/options/choice}">← Choices</a>
+            </span>
+            <h1 class="admin__title" th:text="${choice.id == null ? 'New choice' : choice.label}">Edit</h1>
+        </header>
+
+        <form th:action="@{/admin/options/choice/save}" method="post" class="admin__form stack">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <input type="hidden" name="id" th:value="${choice.id}">
+
+            <div class="form-field">
+                <label class="form-label" for="label">Label</label>
+                <input class="form-input" id="label" name="label" th:value="${choice.label}" required>
+            </div>
+
+            <div class="admin__form-row">
+                <div class="form-field">
+                    <label class="form-label" for="priceDeltaCents">Price delta (cents)</label>
+                    <input class="form-input" id="priceDeltaCents" name="priceDeltaCents" type="number"
+                           th:value="${choice.priceDeltaCents}">
+                    <span class="form-help">Positive for upcharge, negative for discount, 0 for none.</span>
+                </div>
+                <div class="form-field">
+                    <label class="form-label" for="tag">Tag (optional)</label>
+                    <input class="form-input" id="tag" name="tag" th:value="${choice.tag}"
+                           placeholder="cheese, meat, sauce…">
+                </div>
+            </div>
+
+            <label class="form-toggle">
+                <input type="checkbox" name="available" value="true" th:checked="${choice.available}">
+                <span>Available</span>
+            </label>
+
+            <div class="form-field">
+                <label class="form-label" for="unavailableReason">Unavailable reason (optional)</label>
+                <input class="form-input" id="unavailableReason" name="unavailableReason"
+                       th:value="${choice.unavailableReason}"
+                       placeholder="Out — restock Friday">
+            </div>
+
+            <div class="admin__form-actions">
+                <a class="btn btn-ghost" th:href="@{/admin/options/choice}">Cancel</a>
+                <button class="btn btn-primary" type="submit">Save</button>
+            </div>
+        </form>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

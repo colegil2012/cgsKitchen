@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title th:text="|Create account — ${brand.brandName()}|">Create account</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/auth.css}">
+    </th:block>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="auth">
+    <div class="auth__card">
+        <header class="auth__header">
+            <span class="stamp text-muted">Join us</span>
+            <h1 class="auth__title">Create your account</h1>
+            <p class="text-muted">Save addresses and reorder in one tap.</p>
+        </header>
+
+        <div class="alert alert-error" th:if="${error}" th:text="${error}">error</div>
+
+        <form th:action="@{/register}" method="post"
+              th:object="${registerForm}"
+              class="auth__form" novalidate>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <div class="form-field">
+                <label class="form-label" for="email">Email</label>
+                <input class="form-input" type="email" id="email"
+                       th:field="*{email}" required autocomplete="email">
+                <span class="form-error" th:if="${#fields.hasErrors('email')}"
+                      th:errors="*{email}">Email error</span>
+            </div>
+
+            <div class="form-field">
+                <label class="form-label" for="displayName">Name (optional)</label>
+                <input class="form-input" type="text" id="displayName"
+                       th:field="*{displayName}" autocomplete="name">
+                <span class="form-error" th:if="${#fields.hasErrors('displayName')}"
+                      th:errors="*{displayName}"></span>
+            </div>
+
+            <div class="form-field">
+                <label class="form-label" for="phone">Phone (optional)</label>
+                <input class="form-input" type="tel" id="phone"
+                       th:field="*{phone}" autocomplete="tel">
+                <span class="form-error" th:if="${#fields.hasErrors('phone')}"
+                      th:errors="*{phone}"></span>
+            </div>
+
+            <div class="form-field">
+                <label class="form-label" for="password">Password</label>
+                <input class="form-input" type="password" id="password"
+                       th:field="*{password}" required autocomplete="new-password">
+                <span class="form-help">At least 10 characters, with a letter and a number.</span>
+                <span class="form-error" th:if="${#fields.hasErrors('password')}"
+                      th:errors="*{password}"></span>
+            </div>
+
+            <div class="form-field">
+                <label class="form-label" for="passwordConfirm">Confirm password</label>
+                <input class="form-input" type="password" id="passwordConfirm"
+                       th:field="*{passwordConfirm}" required autocomplete="new-password">
+                <span class="form-error" th:if="${#fields.hasErrors('passwordConfirm')}"
+                      th:errors="*{passwordConfirm}"></span>
+            </div>
+
+            <!-- Cloudflare Turnstile -->
+            <div th:if="${turnstileSiteKey != null}"
+                 class="cf-turnstile"
+                 th:attr="data-sitekey=${turnstileSiteKey}"></div>
+
+            <button class="btn btn-primary btn-lg auth__submit" type="submit">Create account →</button>
+
+            <p class="auth__alt">
+                Already have one? <a th:href="@{/login}">Sign in</a>
+            </p>
+        </form>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<script th:if="${turnstileSiteKey != null}"
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</body>
+</html>

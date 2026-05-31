@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title th:text="|About — ${brand.brandName()}|">About</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/about-contact.css}">
+    </th:block>
+</head>
+
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="content-page">
+    <div class="content-page__inner">
+        <h1 class="content-page__title">
+            About <em th:text="${brand.brandName()}">El Conejo</em>
+        </h1>
+
+        <div class="content-page__prose">
+            <p>
+                Celtech Kitchen was founded in 2026 as part of a Greater Project,
+                Celtech General Store. Both were created with a single goal in mind:
+                To Connect Kentucky Farmers with Kentucky Citizens in a meaningful and
+                a mutually beneficial way.
+            </p>
+            <p>
+                Everything prepped by Celtech is sourced within 50 miles of Louisville,
+                if you want to know what's in, or sprayed on your food, you can drive out
+                and ask the farmers themselves, that's how I started buying from them.
+            </p>
+            <p>
+                With these ingredients we've derived a list of modernized
+                Celtic, Irish, Wales, and Cornish recipes, and we're always
+                cooking up new ones to add to the menu.
+            </p>
+            <p>
+                We rotate locations through the week. Check the home page or
+                follow us on Instagram for today's spot.
+            </p>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title th:text="|We're closed — ${brand.brandName()}|">Closed</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/checkout.css}">
+    </th:block>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="checkout-closed-page">
+    <div class="checkout-closed__inner">
+        <h1 class="checkout-closed__title">
+            Is ann ainneamh a tha an rud a tha iongantach<br/><br/>
+            <em>~ " The thing that's seldom is wonderful " ~</em><br/><br/>
+            We'll be back soon!<br/>
+        </h1>
+
+        <div class="alert alert-info">
+            <p>
+                <strong>Your cart is saved</strong> — we'll have it ready for you next time.
+            </p>
+        </div>
+
+        <th:block th:if="${nextEventForClosed != null}">
+            <div class="next-event-card">
+                <div class="next-event-card__heading">
+                    <span class="stamp text-muted">Coming up</span>
+                    <h2 class="next-event-card__title"
+                        th:text="${nextEventForClosed.title}">Event title</h2>
+                </div>
+
+                <div class="next-event-card__details">
+                    <div class="next-event-card__row" th:if="${nextEventForClosed.address != null}">
+                        <span class="next-event-card__label">Where</span>
+                        <span th:text="${nextEventForClosed.address.toSingleLine()}">venue</span>
+                    </div>
+                    <div class="next-event-card__row">
+                        <span class="next-event-card__label">When</span>
+                        <span th:text="${#temporals.format(nextEventForClosed.startAt.atZone(zoneId), 'EEEE, MMMM d')}">Saturday, May 25</span>
+                    </div>
+                    <div class="next-event-card__row">
+                        <span class="next-event-card__label">Hours</span>
+                        <span>
+                            <span th:text="${#temporals.format(nextEventForClosed.startAt.atZone(zoneId), 'h:mm a')}">6:00 PM</span>
+                            –
+                            <span th:text="${#temporals.format(nextEventForClosed.endAt.atZone(zoneId), 'h:mm a')}">10:00 PM</span>
+                        </span>
+                    </div>
+                    <div class="next-event-card__row"
+                         th:if="${nextEventForClosed.description != null and !nextEventForClosed.description.isBlank()}">
+                        <span class="next-event-card__label">Notes</span>
+                        <span th:text="${nextEventForClosed.description}">description</span>
+                    </div>
+                </div>
+            </div>
+        </th:block>
+
+        <th:block th:if="${nextEventForClosed == null}">
+            <p class="text-muted text-center">
+                We haven't scheduled our next event yet — follow us on
+                <a th:href="${brand.instagramUrl()}" target="_blank" rel="noopener">Instagram</a>
+                to find out where we'll be next.
+            </p>
+        </th:block>
+
+        <div class="checkout-closed__actions text-center">
+            <a class="btn btn-secondary" th:href="@{/menu}">Back to menu</a>
+            <a class="btn btn-primary" th:href="@{/}">Home</a>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title th:text="|Admin — ${brand.brandName()}|">Admin</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+    </th:block>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="admin">
+    <div class="container">
+        <header class="admin__header">
+            <span class="admin__link">Admin</span>
+            <h1 class="admin__title">Dashboard</h1>
+        </header>
+
+        <div class="alert alert-success" th:if="${notice}" th:text="${notice}">notice</div>
+        <div class="alert alert-error"   th:if="${error}"  th:text="${error}">error</div>
+
+        <!-- ----- Stat tiles ----- -->
+        <section class="admin__stats">
+            <div class="admin__stat">
+                <div class="admin__stat-label">Current Wait</div>
+                <div class="admin__stat-value" th:text="${currentWait}">0</div>
+            </div>
+            <div class="admin__stat">
+                <div class="admin__stat-label">Total orders</div>
+                <div class="admin__stat-value" th:text="${totalOrders}">0</div>
+            </div>
+            <div class="admin__stat">
+                <div class="admin__stat-label">Users</div>
+                <div class="admin__stat-value" th:text="${totalUsers}">0</div>
+            </div>
+            <div class="admin__stat admin__stat--accent">
+                <div class="admin__stat-label">In kitchen</div>
+                <div class="admin__stat-value" th:text="${inKitchenCount}">0</div>
+            </div>
+            <div class="admin__stat admin__stat--accent">
+                <div class="admin__stat-label">Ready</div>
+                <div class="admin__stat-value" th:text="${readyCount}">0</div>
+            </div>
+            <div class="admin__stat admin__stat--warn">
+                <div class="admin__stat-label">86'd items</div>
+                <div class="admin__stat-value" th:text="${unavailableItems}">0</div>
+            </div>
+            <div class="admin__stat admin__stat--warn">
+                <div class="admin__stat-label">86'd options</div>
+                <div class="admin__stat-value" th:text="${unavailableChoices}">0</div>
+            </div>
+        </section>
+
+        <!-- ----- Section nav ----- -->
+        <section class="admin__nav-tiles">
+            <a class="admin__tile" th:href="@{/admin/menu}">
+                <span class="admin__tile-title">Menu</span>
+                <span class="admin__tile-sub">Items, prices, categories</span>
+            </a>
+            <a class="admin__tile" th:href="@{/admin/options}">
+                <span class="admin__tile-title">Options</span>
+                <span class="admin__tile-sub">Groups, choices, 86</span>
+            </a>
+            <a class="admin__tile" th:href="@{/admin/orders}">
+                <span class="admin__tile-title">Orders</span>
+                <span class="admin__tile-sub">Track, update status</span>
+            </a>
+            <a class="admin__tile" th:href="@{/admin/users}">
+                <span class="admin__tile-title">Users</span>
+                <span class="admin__tile-sub">Accounts, history</span>
+            </a>
+            <a class="admin__tile" th:href="@{/admin/events}">
+                <span class="admin__tile-title">Events</span>
+                <span class="admin__tile-sub">Schedule, update</span>
+            </a>
+        </section>
+
+        <!-- ----- Recent orders ----- -->
+        <section class="admin__section">
+            <header class="admin__section-header">
+                <h2 class="admin__section-title">Recent orders</h2>
+                <a class="btn btn-ghost btn-sm" th:href="@{/admin/orders}">View all →</a>
+            </header>
+
+            <div th:if="${#lists.isEmpty(recentOrders)}" class="text-muted">
+                No orders yet.
+            </div>
+
+            <table class="admin__table" th:unless="${#lists.isEmpty(recentOrders)}">
+                <thead>
+                <tr>
+                    <th>Order</th>
+                    <th>Customer</th>
+                    <th>Status</th>
+                    <th>Total</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="o : ${recentOrders}">
+                    <td>
+                        <span class="admin__order-id" th:text="'#' + ${#strings.substring(o.id, 0, 8)}">#abc12345</span>
+                        <span class="text-muted"
+                              th:text="${#temporals.format(o.createdAt, 'MMM d, HH:mm')}">date</span>
+                    </td>
+                    <td>
+                        <span th:text="${o.customerName ?: o.customerEmail ?: 'Guest'}">Name</span>
+                        <span class="admin__chip" th:if="${o.userId != null}">Registered</span>
+                    </td>
+                    <td>
+                        <span class="admin__status"
+                              th:classappend="${'admin__status--' + #strings.toLowerCase(o.status.name())}"
+                              th:text="${o.status}">Status</span>
+                    </td>
+                    <td th:text="|$${#numbers.formatDecimal(o.totalCents / 100.0, 1, 2)}|">$0.00</td>
+                    <td>
+                        <a class="btn btn-ghost btn-sm" th:href="@{|/admin/orders/${o.id}|}">Open</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

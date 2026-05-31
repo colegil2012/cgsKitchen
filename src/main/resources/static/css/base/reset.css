@@ -21,10 +21,17 @@ html {
 
 body {
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
     line-height: var(--lh-normal);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+}
+
+/* Make <main> fill any unused vertical space so footer parks at bottom. */
+body > main {
+    flex: 1 0 auto;
 }
 
 img, picture, video, canvas, svg {

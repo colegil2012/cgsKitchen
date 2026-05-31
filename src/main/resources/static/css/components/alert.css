@@ -10,12 +10,13 @@
     align-items: center;
     gap: var(--space-3);
     font-size: var(--fs-sm);
+    margin-bottom: var(--space-2);
 }
 
 .alert-success {
     background-color: rgba(90, 130, 60, 0.1);
-    border-color: var(--color-avocado);
-    color: var(--color-avocado);
+    border-color: var(--color-grass);
+    color: var(--color-grass);
 }
 
 .alert-error {
@@ -26,6 +27,6 @@
 
 .alert-info {
     background-color: rgba(244, 200, 102, 0.2);
-    border-color: var(--color-butter);
+    border-color: var(--color-gold-light);
     color: var(--color-ink);
 }

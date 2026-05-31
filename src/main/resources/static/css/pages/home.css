@@ -3,7 +3,7 @@
    ========================================================================== */
 
 .status-bar {
-    background-color: var(--color-avocado);
+    background-color: var(--color-grass);
     color: var(--color-paper);
     padding: var(--space-2) var(--space-4);
     text-align: center;
@@ -26,7 +26,7 @@
     position: relative;
     padding-block: var(--space-20) var(--space-24);
     overflow: hidden;
-    text-align: center;
+    /* No global text-align — the split layout has its own alignment rules. */
 }
 
 .hero__decorative {
@@ -46,16 +46,87 @@
 .hero__inner {
     position: relative;
     z-index: 1;
-    max-width: 900px;
+    max-width: 1100px;
     margin-inline: auto;
     padding-inline: var(--space-6);
 }
 
+/* ----- Top heading row: logo + brand name, side-by-side and centered.
+   Below 700px, stacks vertically (logo above title) so the brand name
+   isn't squeezed on narrow screens. ----- */
+
+.hero__heading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-6);
+    margin-bottom: var(--space-16);
+    text-align: center;
+}
+
+@media (min-width: 700px) {
+    .hero__heading {
+        flex-direction: row;
+        gap: var(--space-10);
+        text-align: left;
+    }
+
+    /* Each child takes exactly half of the row. flex-basis: 0 + flex-grow: 1
+       distributes width equally regardless of intrinsic content size; min-width: 0
+       lets the title shrink instead of pushing the layout wider. */
+    .hero__heading > * {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+}
+
+.hero__logo {
+    width: 100%;
+    max-width: 300px;
+    height: auto;
+    display: block;
+    filter: drop-shadow(0 4px 12px rgba(38, 24, 18, 0.12));
+    /* When the row is 50/50, let the logo fill its half (capped sensibly).
+       max-width still constrains it on very wide screens. */
+    margin-inline: auto;
+}
+
+@media (min-width: 700px) {
+    .hero__logo {
+        max-width: 100%;
+        margin-inline: 0;
+        margin-left: auto;   /* hug the center gap on the logo side */
+    }
+}
+
+@media (min-width: 900px) {
+    .hero__logo {
+        max-width: 420px;
+    }
+}
+
 .hero__brand {
     font-family: var(--font-display);
-    font-size: var(--fs-display);
+    font-size: var(--fs-5xl);
     line-height: 0.9;
-    margin-block: var(--space-6);
+    margin: 0;
+}
+
+@media (min-width: 900px) {
+    .hero__brand {
+        font-size: var(--fs-display);
+    }
+}
+
+/* ----- Centered lockup: tagline + CTAs sit centered on the page,
+   independent of the heading row above. ----- */
+
+.hero__lockup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
 }
 
 .hero__tagline {
@@ -63,42 +134,33 @@
     font-style: italic;
     font-size: var(--fs-2xl);
     color: var(--color-muted);
-    margin-bottom: var(--space-6);
+    margin-bottom: var(--space-16);
 }
 
 .hero__tagline-mark {
-    /* Hand-drawn brush underline using a gradient — purely decorative.
-       Replace with an SVG accent in production for sharper rendering. */
     background-image:
-        linear-gradient(
-            180deg,
-            transparent 0,
-            transparent 60%,
-            var(--color-gold-dark) 60%,
-            var(--color-gold-light) 100%
-        );
+            linear-gradient(
+                    180deg,
+                    transparent 0,
+                    transparent 60%,
+                    var(--color-gold-dark) 60%,
+                    var(--color-gold-light) 100%
+            );
     background-position: 0 100%;
     background-repeat: no-repeat;
     background-size: 100% 0.4em;
 }
 
-.hero__lede {
-    font-size: var(--fs-lg);
-    color: var(--color-ink-soft);
-    line-height: var(--lh-loose);
-    max-width: 580px;
-    margin: 0 auto var(--space-12);
-}
-
 .hero__ctas {
     display: flex;
     gap: var(--space-4);
-    justify-content: center;
     flex-wrap: wrap;
+    justify-content: center;
     margin-bottom: var(--space-16);
 }
 
-/* Info cards (Today's spot / Hours / Delivery) */
+/* ----- Info cards (Today's spot / Hours / Delivery) ----- */
+
 .info-cards {
     display: grid;
     grid-template-columns: 1fr;
@@ -110,7 +172,7 @@
 }
 
 .info-card {
-    background-color: var(--color-paper);
+    background-color: var(--color-white);
     border: 2px solid var(--color-brown-dark);
     border-radius: var(--radius-lg);
     padding: var(--space-6);
@@ -142,11 +204,12 @@
     font-size: var(--fs-xl);
 }
 
-/* Featured items section on home */
+/* ----- Featured items section on home ----- */
+
 .featured {
     padding-block: var(--space-20);
-    background-color: var(--color-gold-dark);
-    border-block: 1px solid var(--color-brown-dark);
+    background-color: var(--color-paper-2);
+    border-block: 2px solid var(--color-gold-dark);
 }
 
 .featured__header {

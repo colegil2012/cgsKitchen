@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(
+        ~{::title},
+        ~{::pageStyles}
+      )}">
+    <title th:text="|${brand.brandName()} — ${brand.tagline()}|">Home</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/home.css}">
+    </th:block>
+</head>
+
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main>
+    <section class="hero">
+        <div aria-hidden="true" class="hero__decorative">&#x16DE</div>
+        <div class="hero__inner">
+
+            <!--
+              Top row: logo + brand name only, side-by-side and centered
+              as a single visual unit. Stacks to vertical on narrow screens.
+              Tagline and CTAs live below in their own centered block.
+            -->
+            <div class="hero__heading">
+                <img class="hero__logo"
+                     th:src="${imageUrls.resolve(brand.images() != null ? brand.images().logoPath() : '/images/logo.png')}"
+                     th:alt="${brand.brandName()}">
+                <h1 class="hero__brand" th:text="${brand.brandName()}"></h1>
+            </div>
+
+            <div class="hero__lockup">
+                <p class="hero__tagline">
+                    <span class="hero__tagline-mark" th:text="${brand.tagline()}"></span>
+                </p>
+
+                <div class="hero__ctas">
+                    <a class="btn btn-primary btn-lg" th:href="@{/menu}">Order ahead →</a>
+                    <a class="btn btn-secondary btn-lg" th:href="@{/about}">Where we are today</a>
+                </div>
+            </div>
+
+            <!--
+              Info cards. Full-width row below the split.
+              Display logic:
+                Today's spot:
+                  - active event   → "Open now at <venue>"
+                  - next event     → "Next: <venue>"
+                  - neither        → "Off the road"
+                Hours today:
+                  - active event   → start - end of active event
+                  - next event     → start - end of next event (date + time)
+                  - neither        → "Check back soon"
+                Delivery: unchanged.
+            -->
+            <div class="info-cards">
+                <div class="info-card">
+                    <div class="info-card__icon">🏕</div>
+                    <div class="info-card__label">Find us here</div>
+                    <div class="info-card__value">
+                        <th:block th:if="${currentEvent != null}">
+                            <span>Open now at</span><br>
+                            <strong th:text="${currentEvent.address != null
+                                ? (currentEvent.address.venueName ?: currentEvent.address.line1)
+                                : currentEvent.title}">Venue</strong>
+                        </th:block>
+                        <th:block th:if="${currentEvent == null and nextEvent != null}">
+                            <span class="text-muted">Next:</span><br>
+                            <strong th:text="${nextEvent.address != null
+                                ? (nextEvent.address.venueName ?: nextEvent.address.line1)
+                                : nextEvent.title}">Venue</strong>
+                        </th:block>
+                        <th:block th:if="${currentEvent == null and nextEvent == null}">
+                            <span>Off the road</span>
+                        </th:block>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card__icon">🕐</div>
+                    <div class="info-card__label">Hours</div>
+                    <div class="info-card__value">
+                        <th:block th:if="${currentEvent != null}"
+                                  th:with="zone=${T(java.time.ZoneId).of(brand.timezone() ?: 'America/New_York')}">
+                            <span th:text="${#temporals.format(currentEvent.startAt.atZone(zone), 'h:mm a')}">6:00 PM</span>
+                            –
+                            <span th:text="${#temporals.format(currentEvent.endAt.atZone(zone), 'h:mm a')}">10:00 PM</span>
+                        </th:block>
+                        <th:block th:if="${currentEvent == null and nextEvent != null}"
+                                  th:with="zone=${T(java.time.ZoneId).of(brand.timezone() ?: 'America/New_York')}">
+                            <span th:text="${#temporals.format(nextEvent.startAt.atZone(zone), 'EEE MMM d')}">Sat May 25</span><br>
+                            <small th:text="${#temporals.format(nextEvent.startAt.atZone(zone), 'h:mm a') + ' – ' +
+                                              #temporals.format(nextEvent.endAt.atZone(zone), 'h:mm a')}">6:00 PM – 10:00 PM</small>
+                        </th:block>
+                        <th:block th:if="${currentEvent == null and nextEvent == null}">
+                            <span class="text-muted">Check back soon</span>
+                        </th:block>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card__icon">🛻</div>
+                    <div class="info-card__label">Delivery</div>
+                    <div class="info-card__value">Uber Direct</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured menu items -->
+    <section class="featured" th:if="${!#lists.isEmpty(featured)}">
+        <div class="container">
+            <div class="featured__header">
+                <span class="stamp text-muted">A few favorites</span>
+                <h2 class="featured__title">
+                    What's been <em>flying off the grill.</em>
+                </h2>
+            </div>
+
+            <div class="featured__grid">
+                <a class="menu-card menu-card--link"
+                   th:each="item : ${featured}"
+                   th:href="@{|/menu#${item.id}|}"
+                   th:classappend="${!item.available} ? 'menu-card--unavailable'">
+                    <div class="menu-card__body" style="padding: var(--space-6); width: 100%;">
+                        <div class="menu-card__header">
+                            <h3 class="menu-card__name" th:text="${item.name}">Name</h3>
+                            <span class="menu-card__badge"
+                                  th:if="${item.badgeLabel != null}"
+                                  th:classappend="${'menu-card__badge--' + item.badgeColor}"
+                                  th:text="${item.badgeLabel}">Badge</span>
+                        </div>
+                        <p class="menu-card__description" th:text="${item.description}">Description</p>
+                        <div class="menu-card__price" th:text="${item.priceDisplay}">$0.00</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

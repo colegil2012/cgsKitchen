@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title th:text="|Orders — Admin — ${brand.brandName()}|">Orders</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+    </th:block>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="admin">
+    <div class="container">
+        <header class="admin__header">
+            <span class="admin__link">
+                <a th:href="@{/admin}">← Admin</a>
+            </span>
+            <h1 class="admin__title">Orders</h1>
+        </header>
+
+        <div class="alert alert-success" th:if="${notice}" th:text="${notice}">notice</div>
+        <div class="alert alert-error"   th:if="${error}"  th:text="${error}">error</div>
+
+        <!-- Status filter chips -->
+        <div class="admin__filter-chips">
+            <a class="admin__filter-chip"
+               th:classappend="${currentStatus == null} ? 'admin__filter-chip--active'"
+               th:href="@{/admin/orders}">All</a>
+            <a class="admin__filter-chip"
+               th:each="s : ${statuses}"
+               th:href="@{|/admin/orders?status=${s.name()}|}"
+               th:classappend="${currentStatus == s.name()} ? 'admin__filter-chip--active'"
+               th:text="${s.name()}">STATUS</a>
+        </div>
+
+        <section class="admin__section">
+            <table class="admin__table">
+                <thead>
+                <tr>
+                    <th>Order</th>
+                    <th>Customer</th>
+                    <th>Fulfillment</th>
+                    <th>Status</th>
+                    <th>Total</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="o : ${orders}">
+                    <td>
+                        <span class="admin__order-id" th:text="'#' + ${#strings.substring(o.id, 0, 8)}">#abc</span><br/>
+                        <span class="text-muted" th:text="${#temporals.format(o.createdAt, 'MMM d, HH:mm')}">date</span>
+                    </td>
+                    <td>
+                        <div th:text="${o.customerName ?: o.customerEmail ?: 'Guest'}">Name</div>
+                        <span class="admin__chip" th:if="${o.userId != null}">Registered</span>
+                    </td>
+                    <td th:text="${o.fulfillment}">PICKUP</td>
+                    <td>
+                        <span class="admin__status"
+                              th:classappend="${'admin__status--' + #strings.toLowerCase(o.status.name())}"
+                              th:text="${o.status}">Status</span>
+                    </td>
+                    <td th:text="|$${#numbers.formatDecimal(o.totalCents / 100.0, 1, 2)}|">$0.00</td>
+                    <td><a class="btn btn-ghost btn-sm" th:href="@{|/admin/orders/${o.id}|}">Open</a></td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+        <!-- Pagination -->
+        <div class="admin__pagination" th:if="${totalPages > 1}">
+            <a class="btn btn-ghost btn-sm"
+               th:if="${currentPage > 0}"
+               th:href="@{/admin/orders(status=${currentStatus},page=${currentPage - 1})}">← Prev</a>
+            <span class="text-muted" th:text="|Page ${currentPage + 1} of ${totalPages}|">Page 1 of 1</span>
+            <a class="btn btn-ghost btn-sm"
+               th:if="${currentPage + 1 < totalPages}"
+               th:href="@{/admin/orders(status=${currentStatus},page=${currentPage + 1})}">Next →</a>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

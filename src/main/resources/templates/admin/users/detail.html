@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title th:text="|${user.email} — Admin|">User</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+    </th:block>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="admin">
+    <div class="container">
+        <header class="admin__header">
+            <span class="admin__link">
+                <a th:href="@{/admin/users}">← Users</a>
+            </span>
+            <h1 class="admin__title" th:text="${user.displayName ?: user.email}">Name</h1>
+            <span class="text-muted" th:text="${user.email}">email</span>
+        </header>
+
+        <div class="alert alert-success" th:if="${notice}" th:text="${notice}">notice</div>
+        <div class="alert alert-error"   th:if="${error}"  th:text="${error}">error</div>
+
+        <div class="admin__two-col">
+            <!-- Left: profile + addresses + payment methods -->
+            <section class="admin__section">
+                <h2 class="admin__section-title">Profile</h2>
+                <dl class="admin__keyvals">
+                    <div><dt>Email</dt><dd th:text="${user.email}">email</dd></div>
+                    <div><dt>Phone</dt><dd th:text="${user.phone ?: '—'}">phone</dd></div>
+                    <div><dt>Email verified</dt><dd th:text="${user.emailVerified ? 'Yes' : 'No'}">Yes</dd></div>
+                    <div><dt>Stripe customer</dt>
+                        <dd><code th:text="${user.stripeCustomerId ?: '—'}">cus_</code></dd></div>
+                    <div><dt>Joined</dt>
+                        <dd th:text="${user.createdAt != null ? #temporals.format(user.createdAt, 'MMM d, yyyy') : '—'}">date</dd></div>
+                </dl>
+
+                <h2 class="admin__section-title">Roles</h2>
+                <form th:action="@{|/admin/users/${user.id}/roles|}" method="post" class="stack">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <div class="admin__checkbox-grid">
+                        <label class="menu-card__checkbox" th:each="r : ${allRoles}">
+                            <input type="checkbox" name="roles" th:value="${r.name()}"
+                                   th:checked="${user.roles != null and user.roles.contains(r)}">
+                            <span th:text="${r}">ROLE</span>
+                        </label>
+                    </div>
+                    <button class="btn btn-primary btn-sm" type="submit">Save roles</button>
+                </form>
+
+                <h2 class="admin__section-title">Status</h2>
+                <form th:action="@{|/admin/users/${user.id}/toggle-enabled|}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button class="btn btn-ghost btn-sm" type="submit"
+                            th:text="${user.enabled} ? 'Disable account' : 'Enable account'">Disable</button>
+                </form>
+
+                <h2 class="admin__section-title">Addresses</h2>
+                <div th:if="${#lists.isEmpty(addresses)}" class="text-muted">No addresses on file.</div>
+                <ul class="admin__address-list" th:unless="${#lists.isEmpty(addresses)}">
+                    <li th:each="a : ${addresses}">
+                        <strong th:text="${a.label ?: 'Address'}">Home</strong>
+                        <span class="admin__chip" th:if="${a.primary}">Primary</span><br/>
+                        <span th:text="${a.toSingleLine()}">123 Main</span>
+                    </li>
+                </ul>
+
+                <h2 class="admin__section-title">Payment methods</h2>
+                <div th:if="${#lists.isEmpty(paymentMethods)}" class="text-muted">No saved cards.</div>
+                <ul class="admin__address-list" th:unless="${#lists.isEmpty(paymentMethods)}">
+                    <li th:each="pm : ${paymentMethods}">
+                        <span th:text="${pm.displayName()}">Visa •••• 4242</span>
+                        <span class="admin__chip" th:if="${pm.defaultMethod}">Default</span>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- Right: order history -->
+            <section class="admin__section">
+                <h2 class="admin__section-title">Order history</h2>
+                <div th:if="${#lists.isEmpty(orders)}" class="text-muted">No orders yet.</div>
+                <table class="admin__table" th:unless="${#lists.isEmpty(orders)}">
+                    <thead><tr><th>Order</th><th>Status</th><th>Total</th><th></th></tr></thead>
+                    <tbody>
+                    <tr th:each="o : ${orders}">
+                        <td>
+                            <span class="admin__order-id" th:text="'#' + ${#strings.substring(o.id, 0, 8)}">#abc</span><br/>
+                            <span class="text-muted"
+                                  th:text="${#temporals.format(o.createdAt, 'MMM d, HH:mm')}">date</span>
+                        </td>
+                        <td>
+                            <span class="admin__status"
+                                  th:classappend="${'admin__status--' + #strings.toLowerCase(o.status.name())}"
+                                  th:text="${o.status}">Status</span>
+                        </td>
+                        <td th:text="|$${#numbers.formatDecimal(o.totalCents / 100.0, 1, 2)}|">$0.00</td>
+                        <td><a class="btn btn-ghost btn-sm" th:href="@{|/admin/orders/${o.id}|}">Open</a></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </section>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -20,7 +20,7 @@
 .form-textarea,
 .form-select {
     padding: var(--space-3) var(--space-4);
-    background-color: var(--color-paper);
+    background-color: var(--color-white);
     color: var(--color-ink);
     border: 2px solid var(--color-border-strong);
     border-radius: var(--radius-md);
@@ -114,5 +114,5 @@
 }
 
 /* States used by JS-driven quote result text */
-.quote-result-ok    { color: var(--color-avocado); }
-.quote-result-error { color: var(--color-salsa); }
+.quote-result-ok    { color: var(--color-grass); }
+.quote-result-error { color: var(--color-danger); }

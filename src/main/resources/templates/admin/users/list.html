@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title th:text="|Users — Admin — ${brand.brandName()}|">Users</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+    </th:block>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="admin">
+    <div class="container">
+        <header class="admin__header">
+            <span class="admin__link">
+                <a th:href="@{/admin}">← Admin</a>
+            </span>
+            <h1 class="admin__title">Users</h1>
+        </header>
+
+        <div class="alert alert-success" th:if="${notice}" th:text="${notice}">notice</div>
+
+        <form th:action="@{/admin/users}" method="get" class="admin__toolbar">
+            <input class="form-input" type="search" name="q" th:value="${q}"
+                   placeholder="Search email or name">
+            <button class="btn btn-secondary btn-sm" type="submit">Search</button>
+        </form>
+
+        <section class="admin__section">
+            <table class="admin__table">
+                <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Name</th>
+                    <th>Roles</th>
+                    <th>Status</th>
+                    <th>Joined</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="u : ${users}">
+                    <td><a th:href="@{|/admin/users/${u.id}|}" th:text="${u.email}">email</a></td>
+                    <td th:text="${u.displayName ?: '—'}">name</td>
+                    <td>
+                        <span class="admin__chip" th:each="r : ${u.roles}" th:text="${r}">ROLE</span>
+                    </td>
+                    <td>
+                        <span th:if="${u.enabled}" class="admin__status admin__status--ok">Enabled</span>
+                        <span th:unless="${u.enabled}" class="admin__status admin__status--out">Disabled</span>
+                    </td>
+                    <td th:text="${u.createdAt != null ? #temporals.format(u.createdAt, 'MMM d, yyyy') : '—'}">date</td>
+                    <td><a class="btn btn-ghost btn-sm" th:href="@{|/admin/users/${u.id}|}">Open</a></td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

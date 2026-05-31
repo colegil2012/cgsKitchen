@@ -2,6 +2,8 @@
 # cgsKitchen — application configuration
 # =============================================================================
 
+kind: Application
+
 spring:
   application:
     name: cgsKitchen
@@ -9,10 +11,9 @@ spring:
   # ---------------------------------------------------------------------------
   # MongoDB
   # ---------------------------------------------------------------------------
-  data:
-    mongodb:
-      uri: ${MONGODB_URI:mongodb://localhost:27017/cgsKitchen}
-      auto-index-creation: true
+  mongodb:
+    uri: ${MONGODB_URI:mongodb://localhost:27017/cgskitchen}
+    auto-index-creation: true
 
   # ---------------------------------------------------------------------------
   # Thymeleaf — disable cache in dev for live reload
@@ -59,30 +60,46 @@ management:
 # Application config
 # =============================================================================
 app:
-  client-id: ${CLIENT_ID:el-conejo}
+  client-id: ${CLIENT_ID:celtech-kitchen}
   api-key: ${API_KEY:dev-shared-key-change-me}
-  cors-allowed-origins: ${CORS_ORIGINS:http://localhost:8080,http://localhost:3001}
+  cors-allowed-origins: ${CORS_ORIGINS:http://localhost:8080,http://localhost:3001,http://localhost:5173}
+
+  security:
+    bcrypt:
+      strength: ${BCRYPT_STRENGTH:12}
+
+  cookies:
+    secure: ${COOKIE_SECURE:true}
+
+  captcha:
+    site-key: ${CAPTCHA_SITE_KEY:1x00000000000000000000AA}
+    secret-key: ${CAPTCHA_SECRET_KEY:1x0000000000000000000000000000000AA}
 
   storefront:
     brand-name: ${BRAND_NAME:Celtech Kitchen}
+    timezone: ${TIMEZONE:America/New_York}
     tagline: ${BRAND_TAGLINE:Celtic Dishes, Kentucky Sourced.}
-    address-today: ${ADDRESS_TODAY:218 Bluebill Ct, Shepherdsville KY 40165}
-    hours-today: ${HOURS_TODAY:11 AM – 9 PM}
     contact-email: ${CONTACT_EMAIL:cole@celtechgs.com}
     contact-phone: ${CONTACT_PHONE:(502) 539-9605}
-    instagram-url: ${INSTAGRAM_URL:https://instagram.com/celtechgs}
+    images:
+      base-url: ${IMAGES_BASE_URL:}
+      logo-path: ${LOGO_PATH:/images/logo.png}
+      logo-mark-path: ${LOGO_MARK_PATH:/images/logo-mark.png}
+      hero-path: ${HERO_PATH:/images/hero.jpg}
+      og-image-path: ${OG_IMAGE_PATH:/images/og-image.jpg}
+      favicon-path: ${FAVICON_PATH:/images/favicon.ico}
+    instagram-url: ${INSTAGRAM_URL:https:}
+    facebook-url: ${FACEBOOK_URL:https://facebook.com/celtechgs}
 
   stripe:
     secret-key: ${STRIPE_SECRET_KEY:}
     publishable-key: ${STRIPE_PUBLISHABLE_KEY:}
     webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
-    connected-account-id: ${STRIPE_ACCOUNT_ID:}
     terminal-location-id: ${STRIPE_LOCATION_ID:}
-    platform-fee-bps: ${PLATFORM_FEE_BPS:0}
 
   delivery:
     provider: ${DELIVERY_PROVIDER:mock}
-    pickup-address: ${PICKUP_ADDRESS:218 Bluebill Ct, Shepherdsville KY 40165}
+    pickup-address: ${PICKUP_ADDRESS:218 Bluebill Ct, Shepherdsville, KY 40165}
     doordash:
       developer-id: ${DOORDASH_DEV_ID:}
       key-id: ${DOORDASH_KEY_ID:}
@@ -91,8 +108,22 @@ app:
       customer-id: ${UBER_CUSTOMER_ID:}
       client-id: ${UBER_CLIENT_ID:}
       client-secret: ${UBER_CLIENT_SECRET:}
+      webhook-signing-key: ${UBER_WEBHOOK_SIGNING_KEY:}
+
+  kitchen:
+    # How many concurrent orders the kitchen can work on. Solo cook = 2.
+    # Two cooks with shared assembly = 3-4. Override per env via
+    # KITCHEN_CAPACITY env var if you want.
+    capacity: ${KITCHEN_CAPACITY:2}
+    default-item-prep-minutes: ${KITCHEN_DEFAULT_ITEM_PREP_MINUTES:10}
+    per-item-surcharge-minutes: ${KITCHEN_PER_ITEM_SURCHARGE_MINUTES:1}
+
+  checkout:
+    debug-js: ${CHECKOUT_DEBUG_JS:false}
 
 logging:
   level:
     root: INFO
-    com.celtech.solutions.foodtruck_web_demo: DEBUG
+    com.celtech.solutions.cgsKitchen: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.security.web: DEBUG

@@ -1,0 +1,86 @@
+/*
+ * Event banner — renders above the nav whenever an event is currently
+ * open. Height is fixed at 36px so the --event-banner-height token in
+ * tokens.css matches reality, keeping sticky offsets accurate.
+ */
+
+.site-nav-wrap {
+    position: relative;
+}
+
+.event-banner {
+    /* Match --event-banner-height in tokens.css. */
+    position: sticky;
+    top: 0;
+    z-index: var(--z-toast);
+    height: var(--event-banner-height);
+    background: var(--color-green-dark);
+    color: var(--color-paper);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.event-banner__inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    flex-wrap: nowrap;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: var(--container-max);
+    margin: 0 auto;
+    padding-inline: var(--space-4);
+    line-height: 1;
+}
+
+.event-banner__indicator {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--color-honey);
+    animation: event-banner-pulse 2s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+@keyframes event-banner-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.event-banner__label {
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.event-banner__divider {
+    opacity: 0.5;
+}
+
+.event-banner__where {
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.event-banner__hours {
+    opacity: 0.9;
+    flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+    .event-banner { font-size: 0.75rem; }
+    .event-banner__inner { gap: var(--space-1); padding-inline: var(--space-2); }
+    /* Hide the hours on tight screens — keep venue visible */
+    .event-banner__hours,
+    .event-banner__divider:last-of-type {
+        display: none;
+    }
+}

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title th:text="|My account — ${brand.brandName()}|">My account</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/account.css}">
+    </th:block>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="account">
+    <div class="container">
+        <header class="account__header">
+            <span class="stamp text-muted">Hi <span th:text="${user.displayName ?: user.email}">friend</span></span>
+            <h1 class="account__title">Your account</h1>
+        </header>
+
+        <div class="alert alert-success" th:if="${notice}" th:text="${notice}">notice</div>
+        <div class="alert alert-error"   th:if="${error}"  th:text="${error}">error</div>
+
+        <!-- ----------------- Profile ----------------- -->
+        <section class="account__section">
+            <h2 class="account__section-title">Profile</h2>
+            <form th:action="@{/account/profile}" method="post"
+                  th:object="${profileForm}" class="stack">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                <div class="form-field">
+                    <label class="form-label">Email</label>
+                    <input class="form-input" type="email" th:value="${user.email}" disabled>
+                    <span class="form-help">Email changes will land with confirmation.</span>
+                </div>
+                <div class="form-field">
+                    <label class="form-label" for="displayName">Name</label>
+                    <input class="form-input" type="text" id="displayName"
+                           th:field="*{displayName}">
+                </div>
+                <div class="form-field">
+                    <label class="form-label" for="phone">Phone</label>
+                    <input class="form-input" type="tel" id="phone"
+                           th:field="*{phone}">
+                </div>
+                <button class="btn btn-primary" type="submit">Save profile</button>
+            </form>
+        </section>
+
+        <!-- ----------------- Password ----------------- -->
+        <section class="account__section">
+            <h2 class="account__section-title">Password</h2>
+            <form th:action="@{/account/password}" method="post" class="stack">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                <div class="form-field">
+                    <label class="form-label" for="currentPassword">Current password</label>
+                    <input class="form-input" type="password" id="currentPassword"
+                           name="currentPassword" required>
+                </div>
+                <div class="form-field">
+                    <label class="form-label" for="newPassword">New password</label>
+                    <input class="form-input" type="password" id="newPassword"
+                           name="newPassword" required>
+                    <span class="form-help">At least 10 characters with a letter and a number.</span>
+                </div>
+                <div class="form-field">
+                    <label class="form-label" for="newPasswordConfirm">Confirm new password</label>
+                    <input class="form-input" type="password" id="newPasswordConfirm"
+                           name="newPasswordConfirm" required>
+                </div>
+                <button class="btn btn-primary" type="submit">Change password</button>
+            </form>
+        </section>
+
+        <!-- ----------------- Addresses ----------------- -->
+        <section class="account__section">
+            <h2 class="account__section-title">Delivery addresses</h2>
+
+            <div th:if="${#lists.isEmpty(addresses)}" class="text-muted">
+                No saved addresses yet.
+            </div>
+
+            <ul class="account__address-list">
+                <li class="account__address" th:each="addr : ${addresses}"
+                    th:id="|address-${addr.id}|">
+                    <div class="account__address-body">
+                        <div class="account__address-label">
+                            <span th:text="${addr.label ?: 'Address'}">Home</span>
+                            <span class="account__address-primary"
+                                  th:if="${addr.primary}">Primary</span>
+                        </div>
+                        <div th:text="${addr.toSingleLine()}">123 Main St, Louisville, KY 40202</div>
+                        <div class="text-muted" th:if="${addr.notes}" th:text="${addr.notes}">Notes</div>
+                    </div>
+                    <div class="account__address-actions">
+                        <form th:if="${!addr.primary}" th:action="@{|/account/addresses/${addr.id}/primary|}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button class="btn btn-ghost btn-sm" type="submit">Make primary</button>
+                        </form>
+                        <form th:action="@{|/account/addresses/${addr.id}/delete|}" method="post"
+                              onsubmit="return confirm('Remove this address?');">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button class="btn btn-ghost btn-sm" type="submit">Remove</button>
+                        </form>
+                    </div>
+                </li>
+            </ul>
+
+            <details class="account__add-address">
+                <summary class="btn btn-secondary">Add an address</summary>
+                <form th:action="@{/account/addresses}" method="post"
+                      th:object="${addressForm}" class="stack mt-4">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                    <div class="form-field">
+                        <label class="form-label" for="label">Label</label>
+                        <input class="form-input" type="text" id="label" th:field="*{label}" placeholder="Home, Work…">
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label" for="line1">Address</label>
+                        <input class="form-input" type="text" id="line1" th:field="*{line1}" required>
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label" for="line2">Apt, suite (optional)</label>
+                        <input class="form-input" type="text" id="line2" th:field="*{line2}">
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label" for="city">City</label>
+                        <input class="form-input" type="text" id="city" th:field="*{city}" required>
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label" for="state">State</label>
+                        <input class="form-input" type="text" id="state" th:field="*{state}" required>
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label" for="postalCode">ZIP / Postal</label>
+                        <input class="form-input" type="text" id="postalCode" th:field="*{postalCode}" required>
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label" for="notes">Delivery notes (optional)</label>
+                        <input class="form-input" type="text" id="notes" th:field="*{notes}">
+                    </div>
+                    <label class="form-toggle">
+                        <input type="checkbox" th:field="*{primary}">
+                        <span>Make this my primary address</span>
+                    </label>
+                    <button class="btn btn-primary" type="submit">Save address</button>
+                </form>
+            </details>
+        </section>
+
+        <!-- ----------------- Payment methods ----------------- -->
+        <section class="account__section">
+            <h2 class="account__section-title">Saved cards</h2>
+            <div th:if="${#lists.isEmpty(paymentMethods)}" class="text-muted">
+                You haven't saved any cards yet. Check the "Save for next time"
+                box on the Stripe payment page during your next checkout.
+            </div>
+            <ul class="account__payments" th:unless="${#lists.isEmpty(paymentMethods)}">
+                <li th:each="pm : ${paymentMethods}" class="account__payment">
+                    <span class="account__payment-name" th:text="${pm.displayName()}">Visa •••• 4242</span>
+                    <span class="text-muted"
+                          th:if="${pm.expMonth != null}"
+                          th:text="|expires ${pm.expMonth}/${pm.expYear}|">expires 03/27</span>
+                    <span class="account__payment-default" th:if="${pm.defaultMethod}">Default</span>
+                </li>
+            </ul>
+        </section>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

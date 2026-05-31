@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title>Order detail — Admin</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+    </th:block>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="admin">
+    <div class="container">
+        <header class="admin__header">
+            <span class="admin__link">
+                <a th:href="@{/admin/orders}">← Orders</a>
+            </span>
+            <h1 class="admin__title"
+                th:text="|Order #${#strings.substring(order.id, 0, 8)}|">Order #abc12345</h1>
+            <span class="admin__status"
+                  th:classappend="${'admin__status--' + #strings.toLowerCase(order.status.name())}"
+                  th:text="${order.status}">Status</span>
+        </header>
+
+        <div class="alert alert-success" th:if="${notice}" th:text="${notice}">notice</div>
+        <div class="alert alert-error"   th:if="${error}"  th:text="${error}">error</div>
+
+        <div class="admin__two-col">
+            <!-- Left: lines + totals -->
+            <section class="admin__section">
+                <h2 class="admin__section-title">Items</h2>
+                <ul class="admin__order-lines">
+                    <li th:each="li : ${order.items}" class="admin__order-line">
+                        <div>
+                            <span class="admin__order-line-qty" th:text="${li.quantity} + '×'">2×</span>
+                            <span th:text="${li.name}">Item</span>
+                        </div>
+                        <div class="text-muted"
+                             th:if="${li.modifiers != null and !li.modifiers.isEmpty()}"
+                             th:text="${#strings.listJoin(li.modifiers, ' · ')}">Modifiers</div>
+                        <div class="admin__order-line-price"
+                             th:text="|$${#numbers.formatDecimal((li.unitPriceCents * li.quantity) / 100.0, 1, 2)}|">$0.00</div>
+                    </li>
+                </ul>
+
+                <dl class="admin__totals">
+                    <div><dt>Subtotal</dt><dd th:text="|$${#numbers.formatDecimal(order.subtotalCents / 100.0, 1, 2)}|">$0</dd></div>
+                    <div><dt>Tax</dt><dd th:text="|$${#numbers.formatDecimal(order.taxCents / 100.0, 1, 2)}|">$0</dd></div>
+                    <div th:if="${order.deliveryFeeCents > 0}">
+                        <dt>Delivery</dt><dd th:text="|$${#numbers.formatDecimal(order.deliveryFeeCents / 100.0, 1, 2)}|">$0</dd>
+                    </div>
+                    <div th:if="${order.tipCents > 0}">
+                        <dt>Tip</dt><dd th:text="|$${#numbers.formatDecimal(order.tipCents / 100.0, 1, 2)}|">$0</dd>
+                    </div>
+                    <div class="admin__totals-grand">
+                        <dt>Total</dt><dd th:text="|$${#numbers.formatDecimal(order.totalCents / 100.0, 1, 2)}|">$0</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <!-- Right: customer + actions -->
+            <section class="admin__section">
+                <h2 class="admin__section-title">Customer</h2>
+                <p>
+                    <strong th:text="${order.customerName ?: 'Guest'}">Name</strong><br/>
+                    <span class="text-muted" th:text="${order.customerEmail}">email</span><br/>
+                    <span class="text-muted" th:if="${order.customerPhone}" th:text="${order.customerPhone}">phone</span>
+                </p>
+                <p th:if="${user != null}">
+                    <a class="btn btn-ghost btn-sm" th:href="@{|/admin/users/${user.id}|}">View account →</a>
+                </p>
+                <p th:unless="${user != null}" class="text-muted">Guest checkout</p>
+
+                <p th:if="${order.deliveryAddress}">
+                    <strong>Delivery:</strong><br/>
+                    <span th:text="${order.deliveryAddress}">address</span>
+                </p>
+
+                <h2 class="admin__section-title">Stripe</h2>
+                <p class="text-muted">
+                    Session: <code th:text="${order.stripeCheckoutSessionId ?: '—'}">—</code><br/>
+                    Intent:  <code th:text="${order.stripePaymentIntentId ?: '—'}">—</code>
+                </p>
+
+                <h2 class="admin__section-title">Timestamps</h2>
+                <p class="text-muted">
+                    Created: <span th:text="${#temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm:ss')}">timestamp</span><br/>
+                    Updated: <span th:text="${#temporals.format(order.updatedAt, 'yyyy-MM-dd HH:mm:ss')}">timestamp</span><br/>
+                    Promised Ready: <span th:text="${#temporals.format(order.promisedReadyAt, 'yyyy-MM-dd HH:mm:ss')}">timestamp</span><br/>
+                </p>
+
+                <h2 class="admin__section-title">Update status</h2>
+                <div class="admin__status-buttons">
+                    <form th:each="s : ${statuses}"
+                          th:action="@{|/admin/orders/${order.id}/status|}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <input type="hidden" name="status" th:value="${s.name()}">
+                        <button class="btn btn-ghost btn-sm"
+                                th:classappend="${order.status == s} ? 'btn-dark'"
+                                type="submit"
+                                th:disabled="${order.status == s}"
+                                th:text="${s}">STATUS</button>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

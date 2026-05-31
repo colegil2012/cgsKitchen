@@ -1,0 +1,50 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title th:text="|Options — Admin — ${brand.brandName()}|">Options admin</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+    </th:block>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="admin">
+    <div class="container">
+        <header class="admin__header">
+            <span class="admin__link">
+                <a th:href="@{/admin}">← Admin</a>
+            </span>
+            <h1 class="admin__title">Options</h1>
+            <p class="text-muted">
+                Modifier choices (cheddar, lamb, mint sauce) live in <strong>Choices</strong>.
+                Reusable bundles of choices (Cheese, Meat, Sauces) live in <strong>Groups</strong>.
+            </p>
+        </header>
+
+        <div class="alert alert-success" th:if="${notice}" th:text="${notice}">notice</div>
+        <div class="alert alert-error"   th:if="${error}"  th:text="${error}">error</div>
+
+        <section class="admin__nav-tiles">
+            <a class="admin__tile" th:href="@{/admin/options/choice}">
+                <span class="admin__tile-title">Choices</span>
+                <span class="admin__tile-sub">
+                    <span th:text="${choiceCount}">0</span> total ·
+                    <span th:text="${eightySixedChoices}">0</span> 86'd
+                </span>
+            </a>
+            <a class="admin__tile" th:href="@{/admin/options/group}">
+                <span class="admin__tile-title">Groups</span>
+                <span class="admin__tile-sub">
+                    <span th:text="${groupCount}">0</span> total
+                </span>
+            </a>
+        </section>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

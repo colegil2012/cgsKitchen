@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title th:text="|Choices — Admin — ${brand.brandName()}|">Choices</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+    </th:block>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="admin">
+    <div class="container">
+        <header class="admin__header">
+            <span class="admin__link">
+                <a th:href="@{/admin/options}">← Options</a>
+            </span>
+            <h1 class="admin__title">Choices</h1>
+            <p class="text-muted">
+                Individual modifier values. 86 one to remove it from every dish that
+                offers it; restore brings it back instantly.
+            </p>
+        </header>
+
+        <div class="alert alert-success" th:if="${notice}" th:text="${notice}">notice</div>
+        <div class="alert alert-error"   th:if="${error}"  th:text="${error}">error</div>
+
+        <div class="admin__toolbar">
+            <a class="btn btn-primary" th:href="@{/admin/options/choice/new}">+ New choice</a>
+        </div>
+
+        <section class="admin__section">
+            <table class="admin__table">
+                <thead>
+                <tr>
+                    <th>Label</th>
+                    <th>Tag</th>
+                    <th>+/-</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="c : ${choices}">
+                    <td>
+                        <a th:href="@{|/admin/options/choice/${c.id}|}" th:text="${c.label}">label</a>
+                    </td>
+                    <td>
+                        <span class="admin__chip" th:if="${c.tag != null}" th:text="${c.tag}">tag</span>
+                        <span th:unless="${c.tag != null}" class="text-muted">—</span>
+                    </td>
+                    <td>
+                        <span th:if="${c.priceDeltaCents == 0}" class="text-muted">—</span>
+                        <span th:unless="${c.priceDeltaCents == 0}"
+                              th:text="${(c.priceDeltaCents > 0 ? '+' : '-')
+                                      + '$' + #numbers.formatDecimal(
+                                          (c.priceDeltaCents < 0 ? -c.priceDeltaCents : c.priceDeltaCents)
+                                          / 100.0, 1, 2)}">+$0.00</span>
+                    </td>
+                    <td>
+                        <span th:if="${c.available}" class="admin__status admin__status--ok">In stock</span>
+                        <span th:unless="${c.available}"
+                              class="admin__status admin__status--out"
+                              th:text="${c.unavailableReason ?: '86'}">Out</span>
+                    </td>
+                    <td class="admin__row-actions">
+                        <form th:action="@{|/admin/options/choice/${c.id}/toggle-availability|}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button class="btn btn-ghost btn-sm" type="submit"
+                                    th:text="${c.available} ? '86' : 'Restore'">86</button>
+                        </form>
+                        <a class="btn btn-ghost btn-sm" th:href="@{|/admin/options/choice/${c.id}|}">Edit</a>
+                        <form th:action="@{|/admin/options/choice/${c.id}/delete|}" method="post"
+                              onsubmit="return confirm('Delete this choice permanently?');">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button class="btn btn-ghost btn-sm" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

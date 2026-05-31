@@ -1,0 +1,458 @@
+/* ==========================================================================
+   Admin pages
+   ========================================================================== */
+
+.admin {
+    padding-block: var(--space-10) var(--space-16);
+}
+
+/* The container holds the page title and a vertical stack of sections.
+   Use .admin__content for the stack so we don't rely on each section
+   carrying its own margin-bottom. */
+.admin__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.admin__header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding-block: var(--space-2);
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: var(--space-4);
+}
+
+.admin__link {
+    color: var(--color-gold-dark);
+    text-decoration: none;
+    font-family: var(--font-mono);
+    font-size: var(--fs-2xl);
+    letter-spacing: 0.1em;
+    line-height: 1.3;
+    text-transform: uppercase;
+}
+
+.admin__title {
+    font-size: var(--fs-4xl);
+    line-height: 1.1;
+}
+
+/* ----- Stats grid ----- */
+
+.admin__stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-10);
+}
+
+.admin__stat {
+    background-color: var(--color-white);
+    border: 2px solid var(--color-brown-dark);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5) var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.admin__stat--accent { background-color: var(--color-paper-2); }
+.admin__stat--warn   { border-color: var(--color-orange); }
+
+.admin__stat-label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--color-muted);
+}
+
+.admin__stat-value {
+    font-family: var(--font-display);
+    font-size: var(--fs-3xl);
+    line-height: 1;
+}
+
+/* ----- Section nav tiles ----- */
+
+.admin__nav-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-10);
+}
+
+.admin__tile {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-6) var(--space-8);
+    background-color: var(--color-white);
+    border: 2px solid var(--color-brown-dark);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    color: inherit;
+    transition: transform var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out);
+}
+
+.admin__tile:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.admin__tile-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-xl);
+    line-height: 1;
+}
+
+.admin__tile-sub {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-muted);
+}
+
+/* ----- Sections ----- */
+
+.admin__section {
+    background-color: var(--color-white);
+    border: 2px solid var(--color-brown-dark);
+    border-radius: var(--radius-lg);
+    padding: var(--space-8);
+    margin-bottom: var(--space-6);
+}
+
+.admin__section:last-child { margin-bottom: 0; }
+
+.admin__section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding-bottom: var(--space-4);
+    margin-bottom: var(--space-5);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.admin__section-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-2xl);
+    margin: 0;
+    line-height: 1.2;
+}
+
+/* When a section title sits inline in body content (not in a header),
+   keep it from hugging the previous element. */
+.admin__section > .admin__section-title {
+    margin-top: var(--space-6);
+    margin-bottom: var(--space-4);
+}
+
+.admin__section > .admin__section-title:first-child {
+    margin-top: 0;
+}
+
+.admin__form > .admin__section-title {
+    margin-top: var(--space-8);
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.admin__form > .admin__section-title:first-of-type {
+    margin-top: 0;
+}
+
+.admin__two-col {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+}
+
+@media (min-width: 900px) {
+    .admin__two-col { grid-template-columns: 1fr 1fr; }
+}
+
+/* ----- Tables ----- */
+
+.admin__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+}
+
+.admin__table th,
+.admin__table td {
+    text-align: left;
+    padding: var(--space-4) var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: middle;
+}
+
+.admin__table tbody tr:last-child th,
+.admin__table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.admin__table th {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-muted);
+    padding-block: var(--space-3);
+}
+
+.admin__table a { color: var(--color-brown-dark); font-weight: 700; }
+
+.admin__row-actions {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+/* ----- Pills / chips ----- */
+
+.admin__chip {
+    display: inline-block;
+    padding: 3px var(--space-2);
+    border-radius: var(--radius-full);
+    background-color: var(--color-paper-2);
+    color: var(--color-ink);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-left: var(--space-2);
+    vertical-align: middle;
+}
+
+.admin__order-id {
+    font-family: var(--font-mono);
+    font-weight: 700;
+}
+
+/* Status pills */
+.admin__status {
+    display: inline-block;
+    padding: 4px var(--space-3);
+    border-radius: var(--radius-full);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background-color: var(--color-paper-2);
+    line-height: 1.2;
+}
+
+.admin__status--ok               { background-color: var(--color-grass); color: var(--color-paper); }
+.admin__status--out              { background-color: var(--color-orange);   color: var(--color-paper); }
+.admin__status--pending_payment  { background-color: var(--color-gold-light);  color: var(--color-ink); }
+.admin__status--paid             { background-color: var(--color-gold-dark); color: var(--color-paper); }
+.admin__status--in_kitchen       { background-color: var(--color-gold-dark); color: var(--color-paper); }
+.admin__status--ready            { background-color: var(--color-grass); color: var(--color-paper); }
+.admin__status--out_for_delivery { background-color: var(--color-brown-dark); color: var(--color-paper); }
+.admin__status--completed        { background-color: var(--color-ink);     color: var(--color-paper); }
+.admin__status--cancelled        { background-color: var(--color-orange);   color: var(--color-paper); }
+.admin__status--refunded         { background-color: var(--color-orange);   color: var(--color-paper); }
+
+/* ----- Filter chips (orders) ----- */
+
+.admin__filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-6);
+}
+
+.admin__filter-chip {
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-full);
+    border: 2px solid var(--color-brown-dark);
+    background-color: var(--color-white);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-ink);
+    text-decoration: none;
+}
+
+.admin__filter-chip--active {
+    background-color: var(--color-ink);
+    color: var(--color-paper);
+}
+
+/* ----- Forms ----- */
+
+.admin__form {
+    background-color: var(--color-paper);
+    border: 2px solid var(--color-brown-dark);
+    border-radius: var(--radius-lg);
+    padding: var(--space-8);
+}
+
+.admin__form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--space-5);
+}
+
+.admin__form-actions {
+    display: flex;
+    gap: var(--space-3);
+    justify-content: flex-end;
+    margin-top: var(--space-6);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--color-border);
+}
+
+.admin__toolbar {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+    margin: var(--space-5);
+}
+
+.admin__checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--space-3);
+}
+
+/* Tag-style checkbox used in events edit form. Renders as a pill-shaped
+   selectable chip rather than a bare checkbox+label. */
+.admin__tag-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    border: 2px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    background-color: var(--color-paper);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    user-select: none;
+    transition: border-color var(--duration-fast) ease,
+    background-color var(--duration-fast) ease;
+}
+
+.admin__tag-checkbox:hover {
+    border-color: var(--color-gold-dark);
+}
+
+.admin__tag-checkbox input[type="checkbox"] {
+    accent-color: var(--color-grass);
+    width: 14px;
+    height: 14px;
+    margin: 0;
+}
+
+.admin__tag-checkbox:has(input:checked) {
+    background-color: rgba(90, 130, 60, 0.12);
+    border-color: var(--color-grass);
+}
+
+/* ----- Order detail ----- */
+
+.admin__order-lines {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--space-6);
+}
+
+.admin__order-line {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "name price" "mods price";
+    column-gap: var(--space-4);
+    row-gap: var(--space-1);
+    padding-block: var(--space-4);
+    border-bottom: 1px dashed var(--color-border);
+}
+
+.admin__order-line:last-child { border-bottom: none; }
+
+.admin__order-line > :nth-child(1) { grid-area: name; }
+.admin__order-line > :nth-child(2) { grid-area: mods; }
+.admin__order-line-price { grid-area: price; align-self: center; font-family: var(--font-mono); font-weight: 700; }
+
+.admin__order-line-qty {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    margin-right: var(--space-2);
+}
+
+.admin__totals {
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--space-3) var(--space-6);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+}
+
+.admin__totals > div {
+    display: contents;
+}
+
+.admin__totals dt { font-family: var(--font-mono); font-size: var(--fs-sm); color: var(--color-muted); }
+.admin__totals dd { margin: 0; font-family: var(--font-mono); text-align: right; }
+
+.admin__totals-grand dt,
+.admin__totals-grand dd {
+    font-weight: 700;
+    color: var(--color-ink);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-border);
+}
+
+.admin__status-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+}
+
+.admin__keyvals {
+    margin: 0 0 var(--space-2);
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: var(--space-3) var(--space-5);
+}
+.admin__keyvals > div { display: contents; }
+.admin__keyvals dt { font-family: var(--font-mono); font-size: var(--fs-sm); color: var(--color-muted); }
+.admin__keyvals dd { margin: 0; word-break: break-word; }
+
+.admin__address-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.admin__address-list > li {
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.admin__pagination {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    justify-content: center;
+    margin-top: var(--space-6);
+}

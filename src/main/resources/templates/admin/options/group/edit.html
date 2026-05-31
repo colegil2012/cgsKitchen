@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title>Edit group — Admin</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+    </th:block>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="admin">
+    <div class="container">
+        <header class="admin__header">
+            <span class="admin__link">
+                <a th:href="@{/admin/options/group}">← Groups</a>
+            </span>
+            <h1 class="admin__title" th:text="${group.id == null ? 'New group' : group.label}">Edit</h1>
+        </header>
+
+        <form th:action="@{/admin/options/group/save}" method="post" class="admin__form stack">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <input type="hidden" name="id" th:value="${group.id}">
+
+            <div class="form-field">
+                <label class="form-label" for="label">Label</label>
+                <input class="form-input" id="label" name="label" th:value="${group.label}" required>
+            </div>
+
+            <div class="admin__form-row">
+                <div class="form-field">
+                    <label class="form-label" for="selectionType">Selection type</label>
+                    <select class="form-input" id="selectionType" name="selectionType" required>
+                        <option value="SINGLE" th:selected="${group.selectionType?.name() == 'SINGLE'}">Single (dropdown)</option>
+                        <option value="MULTI"  th:selected="${group.selectionType?.name() == 'MULTI'}">Multi (checkboxes)</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label class="form-label" for="maxSelections">Max selections (MULTI only, 0 = no cap)</label>
+                    <input class="form-input" id="maxSelections" name="maxSelections" type="number"
+                           th:value="${group.maxSelections}">
+                </div>
+            </div>
+
+            <label class="form-toggle">
+                <input type="checkbox" name="required" value="true" th:checked="${group.required}">
+                <span>Required (customer must choose)</span>
+            </label>
+
+            <label class="form-toggle">
+                <input type="checkbox" name="available" value="true" th:checked="${group.available}">
+                <span>Available (otherwise hidden on the menu)</span>
+            </label>
+
+            <div class="form-field">
+                <label class="form-label">Choices in this group</label>
+                <div class="admin__checkbox-grid">
+                    <label class="menu-card__checkbox" th:each="c : ${allChoices}">
+                        <input type="checkbox" name="choiceIds" th:value="${c.id}"
+                               th:checked="${group.choiceIds != null and #lists.contains(group.choiceIds, c.id)}">
+                        <span th:text="${c.label}">choice</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-field">
+                <label class="form-label" for="defaultChoiceId">Default choice (optional)</label>
+                <select class="form-input" id="defaultChoiceId" name="defaultChoiceId">
+                    <option value="">— none —</option>
+                    <option th:each="c : ${allChoices}"
+                            th:value="${c.id}"
+                            th:selected="${c.id == group.defaultChoiceId}"
+                            th:text="${c.label}">choice</option>
+                </select>
+                <span class="form-help">
+                    For SINGLE: pre-selected. For MULTI: ignored — set defaults per dish via the menu item editor.
+                </span>
+            </div>
+
+            <div class="admin__form-actions">
+                <a class="btn btn-ghost" th:href="@{/admin/options/group}">Cancel</a>
+                <button class="btn btn-primary" type="submit">Save</button>
+            </div>
+        </form>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

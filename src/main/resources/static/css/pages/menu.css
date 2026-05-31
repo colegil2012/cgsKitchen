@@ -10,7 +10,7 @@
 }
 
 .menu-page__title {
-    font-size: var(--fs-5xl);
+    font-size: var(--fs-6xl);
     margin-block: var(--space-4);
 }
 
@@ -20,7 +20,7 @@
 
 .menu-page__nav {
     position: sticky;
-    top: 70px;
+    top: 0;
     z-index: calc(var(--z-nav) - 1);
     background-color: var(--color-gold-dark);
     backdrop-filter: blur(8px);
@@ -48,7 +48,7 @@
     padding: var(--space-2) var(--space-5);
     border-radius: var(--radius-full);
     border: 2px solid var(--color-ink);
-    background-color: var(--color-paper);
+    background-color: var(--color-white);
     color: var(--color-ink);
     font-family: var(--font-mono);
     font-size: var(--fs-sm);
@@ -58,8 +58,8 @@
     text-decoration: none;
     white-space: nowrap;
     transition:
-        background-color var(--duration-fast) ease,
-        color var(--duration-fast) ease;
+            background-color var(--duration-fast) ease,
+            color var(--duration-fast) ease;
 }
 
 .menu-page__category-link:hover {
@@ -69,7 +69,10 @@
 
 .menu-category {
     padding-block: var(--space-16);
-    scroll-margin-top: 140px;  /* sticky nav offset */
+    /* Scroll anchor offset: clear the site nav + the sticky category pills.
+       The category pills are roughly 64px tall (padding + button height).
+       Add that to the dynamic sticky-offset for accurate anchor scrolling. */
+    scroll-margin-top: calc(var(--sticky-offset) + 64px);
 }
 
 .menu-category:not(:last-child) {
@@ -90,6 +93,10 @@
     display: grid;
     grid-template-columns: 1fr;
     gap: var(--space-4);
+}
+
+.menu-card {
+    background-color: var(--color-white);
 }
 
 @media (min-width: 800px) {

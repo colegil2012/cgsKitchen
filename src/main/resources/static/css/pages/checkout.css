@@ -42,7 +42,7 @@
 
 /* Order summary card */
 .order-summary {
-    background-color: var(--color-paper-2);
+    background-color: var(--color-white);
     border-radius: var(--radius-lg);
     padding: var(--space-6);
     border: 2px solid var(--color-border);
@@ -57,11 +57,20 @@
     margin-bottom: var(--space-6);
 }
 
+/* ==========================================================================
+   Order summary line items
+   ========================================================================== */
+
 .order-summary__line {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    grid-template-areas:
+        "info  qty    remove"
+        "info  price  remove";
+    column-gap: var(--space-4);
+    row-gap: var(--space-1);
     align-items: center;
-    gap: var(--space-3);
-    padding-block: var(--space-3);
+    padding-block: var(--space-4);
     border-bottom: 1px solid var(--color-border);
 }
 
@@ -69,40 +78,77 @@
     border-bottom: none;
 }
 
+.order-summary__line-info {
+    grid-area: info;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-width: 0;
+}
+
 .order-summary__line-name {
-    flex: 1;
-    font-weight: 500;
+    font-weight: 700;
+    font-size: var(--fs-base);
+    color: var(--color-ink);
+}
+
+.order-summary__line-selections {
+    font-size: var(--fs-sm);
+    line-height: var(--lh-snug);
+    word-break: break-word;
+}
+
+.order-summary__line-breakdown {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-muted);
+    margin-top: 2px;
+}
+
+.order-summary__line-breakdown-up {
+    color: var(--color-avocado);
 }
 
 .order-summary__line-qty-controls {
-    display: flex;
+    grid-area: qty;
+    display: inline-flex;
     align-items: center;
     gap: var(--space-2);
 }
 
+.order-summary__line-qty-controls form {
+    display: inline-flex;
+}
+
 .order-summary__line-qty {
     font-family: var(--font-mono);
-    min-width: 24px;
+    font-weight: 700;
+    min-width: 1.5ch;
     text-align: center;
 }
 
 .order-summary__line-price {
+    grid-area: price;
     font-family: var(--font-mono);
     font-weight: 700;
-    min-width: 70px;
     text-align: right;
 }
 
 .order-summary__remove {
-    background: none;
+    grid-area: remove;
+    width: 32px;
+    height: 32px;
     border: none;
+    background: transparent;
     color: var(--color-muted);
     cursor: pointer;
-    padding: var(--space-1);
+    border-radius: var(--radius-sm);
+    transition: color var(--duration-fast) ease, background-color var(--duration-fast) ease;
 }
 
 .order-summary__remove:hover {
-    color: var(--color-gold-dark);
+    color: var(--color-salsa);
+    background-color: var(--color-paper-2);
 }
 
 .order-summary__totals {
@@ -161,6 +207,15 @@
 }
 
 /* Order confirm page */
+
+.order-confirm__logo {
+    display: inline-block;
+    width: 100%;
+    max-width: 240px;
+    height: auto;
+    margin-bottom: var(--space-6);
+    filter: drop-shadow(0 4px 12px rgba(38, 24, 18, 0.12));
+}
 .order-confirm {
     text-align: center;
     padding-block: var(--space-24);
@@ -183,6 +238,17 @@
     margin: 0 auto var(--space-8);
 }
 
+.order-confirm__lede-sub {
+    /* Renders as a separate line under the ready-time copy, slightly
+       smaller and muted so it reads as supplementary info rather than
+       primary message. Used inside .order-confirm__lede so it inherits
+       the centered alignment. */
+    display: block;
+    margin-top: var(--space-2);
+    font-size: var(--fs-sm);
+    color: var(--color-muted);
+}
+
 .order-confirm__ref {
     font-family: var(--font-mono);
     font-size: var(--fs-sm);
@@ -191,7 +257,204 @@
 }
 
 .order-confirm__mock-notice {
-    color: var(--color-salsa);
+    color: var(--color-orange);
     font-weight: 700;
     margin-bottom: var(--space-6);
+}
+
+/* ==========================================================================
+   Checkout-closed page
+   --------------------------------------------------------------------------
+   Shown when no event is currently active. Renders inside the shared
+   .content-page shell (about-contact.css), so we only need styles for the
+   bits unique to this page: the saved-cart alert, the next-event card,
+   and the action row.
+   ========================================================================== */
+
+.checkout-closed-page {
+    padding-block: var(--space-20);
+}
+
+.checkout-closed__inner {
+    width: 100%;
+    max-width: 720px;
+    margin-inline: auto;
+    padding-inline: var(--space-6);
+}
+
+.checkout-closed__title {
+    font-size: var(--fs-2xl);
+    margin-bottom: var(--space-8);
+    text-align: center;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--space-4);
+}
+
+.checkout-closed__title em {
+    color: var(--color-green-dark);
+}
+
+.checkout-closed__prose {
+    font-size: var(--fs-lg);
+    line-height: var(--lh-loose);
+    color: var(--color-ink-soft);
+}
+
+.checkout-closed__prose p + p {
+    margin-top: var(--space-5);
+}
+
+/* Tighten the alert so it sits comfortably below the title without an
+   awkward chunk of whitespace. */
+.checkout-closed__alert {
+    margin-block: var(--space-8);
+}
+
+.checkout-closed__alert p {
+    margin: 0;
+}
+
+/* "We haven't scheduled..." paragraph state — same vertical rhythm as the
+   card so layout stays consistent whether or not we have a next event. */
+.checkout-closed__no-event {
+    margin-block: var(--space-10);
+}
+
+/* Action row: pair of buttons centered with a comfortable gap. Replaces
+   the old inline margin so spacing is consistent with the rest of the
+   page. */
+.checkout-closed__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-3);
+    margin-top: var(--space-10);
+}
+
+/* ----- Next-event card -----
+   Clean white card with a soft border + shadow. The header sits above
+   a stack of label/value rows. Each row keeps the label in a fixed-width
+   column on wider screens and stacks on small ones. */
+
+.next-event-card {
+    background-color: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-8);
+    margin-block: var(--space-10);
+}
+
+.next-event-card__heading {
+    text-align: center;
+    padding-bottom: var(--space-6);
+    margin-bottom: var(--space-6);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.next-event-card__title {
+    font-family: var(--font-display);
+    font-size: var(--fs-3xl);
+    line-height: var(--lh-snug);
+    margin-block: var(--space-2) 0;
+}
+
+.next-event-card__details {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.next-event-card__row {
+    display: grid;
+    grid-template-columns: minmax(80px, 120px) 1fr;
+    column-gap: var(--space-6);
+    align-items: baseline;
+    line-height: var(--lh-snug);
+}
+
+.next-event-card__label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--color-muted);
+}
+
+.next-event-card__row > span:not(.next-event-card__label) {
+    font-size: var(--fs-lg);
+    color: var(--color-ink);
+}
+
+/* On very narrow screens, stack the label above the value so neither gets
+   squeezed. Mirrors the same breakpoint used by .contact-info__card. */
+@media (max-width: 500px) {
+    .next-event-card {
+        padding: var(--space-6);
+    }
+    .next-event-card__row {
+        grid-template-columns: 1fr;
+        row-gap: var(--space-1);
+    }
+}
+
+/* ============================================================
+ *  Debug panel for /checkout — toggleable with Ctrl+Shift+D.
+ *  Append to checkout.css (or load as a separate dev-only file).
+ * ============================================================ */
+
+#debug-panel {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    z-index: 9999;
+    width: 360px;
+    background: #1a1a1a;
+    color: #e0e0e0;
+    border: 1px solid #444;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 0.75rem;
+}
+
+.debug-panel__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #444;
+    background: #222;
+    border-radius: 8px 8px 0 0;
+}
+
+.debug-panel__header button {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1rem;
+    cursor: pointer;
+}
+.debug-panel__header button:hover { color: #fff; }
+
+.debug-panel__body {
+    padding: 0.75rem;
+}
+
+.debug-panel__grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.25rem 0.75rem;
+    margin: 0 0 0.75rem 0;
+}
+
+.debug-panel__grid dt {
+    color: #888;
+    font-weight: normal;
+}
+
+.debug-panel__grid dd {
+    margin: 0;
+    color: #e0e0e0;
+    word-break: break-all;
 }
