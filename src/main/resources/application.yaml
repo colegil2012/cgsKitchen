@@ -15,6 +15,12 @@ spring:
     uri: ${MONGODB_URI:mongodb://localhost:27017/cgskitchen}
     auto-index-creation: true
 
+  session:
+    timeout: 2h
+    data:
+      mongodb:
+        collection-name: sessions
+
   # ---------------------------------------------------------------------------
   # Thymeleaf — disable cache in dev for live reload
   # ---------------------------------------------------------------------------
