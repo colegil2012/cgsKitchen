@@ -53,9 +53,12 @@
                         <span class="text-muted" th:text="${#temporals.format(o.createdAt, 'MMM d, HH:mm')}">date</span>
                     </td>
                     <td>
-                        <div th:text="${o.customerName ?: o.customerEmail ?: 'Guest'}">Name</div>
+                        <div th:text="${o.customerName ?: o.customerEmail
+                    ?: (o.source != null and o.source.name() == 'POS' ? 'Walk-in (POS)' : 'Guest')}">Name</div>
                         <span class="admin__chip" th:if="${o.userId != null}">Registered</span>
+                        <span class="admin__chip" th:if="${o.userId == null and o.source != null and o.source.name() == 'POS'}">POS</span>
                     </td>
+
                     <td th:text="${o.fulfillment}">PICKUP</td>
                     <td>
                         <span class="admin__status"

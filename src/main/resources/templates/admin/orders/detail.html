@@ -63,7 +63,10 @@
             <section class="admin__section">
                 <h2 class="admin__section-title">Customer</h2>
                 <p>
-                    <strong th:text="${order.customerName ?: 'Guest'}">Name</strong><br/>
+                    <p class="text-muted">
+                        Source: <span th:text="${order.source}">WEB</span><br/>
+                    <strong th:text="${order.customerName
+                    ?: (order.source != null and order.source.name() == 'POS' ? 'Walk-in (POS)' : 'Guest')}">Name</strong><br/>
                     <span class="text-muted" th:text="${order.customerEmail}">email</span><br/>
                     <span class="text-muted" th:if="${order.customerPhone}" th:text="${order.customerPhone}">phone</span>
                 </p>

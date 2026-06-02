@@ -267,13 +267,24 @@ public class CartController {
             cartService.save(cart);
         }
 
+        // Resolve the live event to stamp on the order. The checkout-closed
+        // gate in checkout() should guarantee one exists by the time we get
+        // here; orElseThrow is a belt-and-suspenders assertion that surfaces
+        // the real problem instead of a Mongo validation 500 if some path
+        // ever reaches order creation outside a live event.
+        String eventId = eventService.findCurrentlyOpen()
+                .map(com.celtech.solutions.cgsKitchen.models.storefront.event.Event::getId)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Checkout reached resolveActiveOrder with no live event"));
+
         Order created = orderService.createFromCart(
                 cart.getLines(), cart.getSubtotalCents(),
                 Order.Fulfillment.PICKUP,
                 userId,
                 form.getName(), form.getEmail(), form.getPhone(),
                 null,
-                0L);
+                0L,
+                eventId);
         cart.setActiveOrderId(created.getId());
         cartService.save(cart);
         log.info("Created new checkout Order {} for cart {}", created.getId(), cart.getId());

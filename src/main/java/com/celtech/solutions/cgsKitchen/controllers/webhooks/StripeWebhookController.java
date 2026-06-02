@@ -181,6 +181,7 @@ public class StripeWebhookController {
         }
         Order.Status prev = order.getStatus();
         order.setStatus(Order.Status.PAID);
+        order.setPaymentMethod(Order.PaymentMethod.CARD);
         order.setExpiresAt(null);
         orderService.save(order);
         // Detach the order from its originating cart so the next /checkout

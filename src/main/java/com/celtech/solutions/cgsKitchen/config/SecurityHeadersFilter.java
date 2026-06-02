@@ -70,11 +70,12 @@ public class SecurityHeadersFilter {
 
     private static final String CSP =
             "default-src 'self'; " +
-                    "script-src 'self' https://js.stripe.com; " +
-                    "connect-src 'self' https://api.stripe.com; " +
-                    "frame-src https://js.stripe.com https://hooks.stripe.com; " +
+                    "script-src 'self' https://js.stripe.com https://challenges.cloudflare.com; " +
+                    "connect-src 'self' https://api.stripe.com https://challenges.cloudflare.com; " +
+                    "frame-src https://js.stripe.com https://hooks.stripe.com https://challenges.cloudflare.com; " +
                     "img-src 'self' data: https:; " +
-                    "style-src 'self' 'unsafe-inline'; " +
+                    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+                    "font-src 'self' https://fonts.gstatic.com; " +
                     "object-src 'none'; " +
                     "base-uri 'self'; " +
                     "form-action 'self'; " +

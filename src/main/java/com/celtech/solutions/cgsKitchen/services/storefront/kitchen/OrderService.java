@@ -54,7 +54,8 @@ public class OrderService {
                                 String userId,
                                 String customerName, String customerEmail,
                                 String customerPhone, String deliveryAddress,
-                                long deliveryFeeCents) {
+                                long deliveryFeeCents,
+                                String eventId) {
         long tax = Math.round(subtotalCents * TAX_RATE);
         long total = subtotalCents + tax + deliveryFeeCents;
 
@@ -65,6 +66,7 @@ public class OrderService {
                 .status(Order.Status.PENDING_PAYMENT)
                 .fulfillment(fulfillment)
                 .userId(userId)
+                .eventId(eventId)
                 .customerName(customerName)
                 .customerEmail(customerEmail)
                 .customerPhone(customerPhone)

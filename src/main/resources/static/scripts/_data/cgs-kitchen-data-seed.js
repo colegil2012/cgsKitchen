@@ -38,10 +38,31 @@ targetDb.webhook_events.drop();
 //Stripe tokenized payments
 targetDb.payment_methods.drop();
 
+targetDb.orders.createIndex({"eventId": 1});
+
+targetDb.runCommand({
+    collMod: "orders",
+    validator: {
+        $jsonSchema: {
+            bsonType: "object",
+            required: ["eventId"],
+            properties: {
+                eventId: {
+                    bsonType: "string",
+                    minLength: 1,
+                    description: "Order must be linked to an Event. Required, non-empty."
+                }
+            }
+        }
+    },
+    validationLevel: "moderate",
+    validationAction: "error"   // reject the write outright (vs "warn" = log only)
+});
+
 targetDb.users.insertOne({
     _id: "admin-cole",
     email: "cole@celtechgs.com",
-    passwordHash: "$2a$10$kZRhUYzWt3mFwrM1G23yb.RTZg8V7.6nfGgJwTmRpYAhLNEsT8GSm", // "ChangeMe123!"
+    passwordHash: "$2a$10$kZRhUYzWt3mFwrM1G23yb.RTZg8V7.6nfGgJwTmRpYAhLNEsT8GSm",
     displayName: "Admin",
     enabled: true,
     emailVerified: true,

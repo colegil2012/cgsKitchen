@@ -20,6 +20,8 @@ public interface OrderRepository extends MongoRepository<Order, String> {
     List<Order> findByStatus(Order.Status status);
     List<Order> findByStatusInOrderByCreatedAtAsc(Collection<Order.Status> statuses);
 
+    List<Order> findByEventId(String eventId);
+
     Page<Order> findAllByOrderByCreatedAtDesc(Pageable pageable);
     Page<Order> findByStatusOrderByCreatedAtDesc(Order.Status status, Pageable pageable);
     Page<Order> findByStatusNotOrderByCreatedAtDesc(Order.Status status, Pageable pageable);

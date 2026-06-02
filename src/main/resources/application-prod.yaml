@@ -18,6 +18,14 @@ spring:
         # cache busts work.
         period: ${STATIC_RESOURCE_CACHE:31536000}
 
+server:
+  servlet:
+    session:
+      cookie:
+        secure: ${COOKIE_SECURE:true}
+        same-site: lax
+        http-only: true
+
 # Tighter logging — DEBUG floods prod logs and leaks request headers
 # from Spring Security.
 logging:
@@ -28,6 +36,7 @@ logging:
     org.springframework.security.web: WARN
 
 app:
+  cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:https://celtechgs.kitchen.com}
   cookies:
     secure: ${COOKIE_SECURE:true}
   checkout:

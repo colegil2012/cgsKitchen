@@ -21,14 +21,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PublicApiController {
 
-    private final MenuService menuService;
     private final DeliveryProvider delivery;
     private final AppProperties props;
-
-    @GetMapping("/menu")
-    public List<MenuItemView> menu() {
-        return menuService.findAvailable();
-    }
 
     @PostMapping("/delivery/quote")
     public DeliveryQuoteResponse quote(@RequestBody QuoteRequest req) {

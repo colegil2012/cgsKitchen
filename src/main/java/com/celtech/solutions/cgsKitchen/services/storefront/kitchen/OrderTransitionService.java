@@ -260,6 +260,7 @@ public class OrderTransitionService {
 
             Order.Status previous = order.getStatus();
             order.setStatus(Order.Status.PAID);
+            order.setPaymentMethod(Order.PaymentMethod.CASH);
             Order saved = orderService.save(order);
 
             orderEvents.record(orderId, previous, Order.Status.PAID,

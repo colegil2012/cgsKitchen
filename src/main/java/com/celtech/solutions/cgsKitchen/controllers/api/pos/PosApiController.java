@@ -2,7 +2,9 @@ package com.celtech.solutions.cgsKitchen.controllers.api.pos;
 
 import com.celtech.solutions.cgsKitchen.config.AppProperties;
 import com.celtech.solutions.cgsKitchen.models.storefront.kitchen.Order;
+import com.celtech.solutions.cgsKitchen.services.storefront.event.EventService;
 import com.celtech.solutions.cgsKitchen.services.storefront.kitchen.OrderService;
+import com.celtech.solutions.cgsKitchen.services.user.UserService;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.terminal.ConnectionToken;
@@ -41,7 +43,9 @@ import java.util.Map;
 public class PosApiController {
 
     private final OrderService orderService;
+    private final UserService userService;
     private final AppProperties props;
+    private final EventService eventService;
 
 
     // ------------------------------------------------------------------
@@ -49,7 +53,22 @@ public class PosApiController {
     // ------------------------------------------------------------------
 
     @PostMapping("/pos/orders")
-    public ResponseEntity<Order> createPosOrder(@Valid @RequestBody PosOrderRequest req) {
+    public ResponseEntity<?> createPosOrder(@Valid @RequestBody PosOrderRequest req) {
+        // --- Event linkage guard: no orphaned orders. ---
+        // We check EXISTENCE, not liveness. An offline cash order flushed
+        // after its event ended is legitimate and must succeed; only a
+        // missing/garbage eventId is rejected.
+        if (req.eventId() == null || req.eventId().isBlank()) {
+            return ResponseEntity.status(400).body(
+                    new ErrorResponse("missing_event",
+                            "Order must include an eventId. No event was active at ring-up."));
+        }
+        if (eventService.findById(req.eventId()).isEmpty()) {
+            return ResponseEntity.status(400).body(
+                    new ErrorResponse("unknown_event",
+                            "eventId '" + req.eventId() + "' does not reference a known event."));
+        }
+
         long subtotal = req.items().stream()
                 .mapToLong(i -> i.unitPriceCents() * i.quantity())
                 .sum();
@@ -59,13 +78,19 @@ public class PosApiController {
         var order = Order.builder()
                 .source(Order.Source.POS)
                 .status(Order.Status.PENDING_PAYMENT)
+                .paymentMethod(Order.PaymentMethod.UNPAID)
                 .fulfillment(Order.Fulfillment.PICKUP)
+                .eventId(req.eventId())
+                .userId(req.userId())
+                .customerName(req.customerName())
+                .customerEmail(req.customerEmail())
                 .items(req.items().stream()
                         .map(i -> Order.LineItem.builder()
                                 .menuItemId(i.menuItemId())
                                 .name(i.name())
                                 .quantity(i.quantity())
                                 .unitPriceCents(i.unitPriceCents())
+                                .modifiers(i.modifiers() == null ? List.of() : i.modifiers())
                                 .build())
                         .toList())
                 .subtotalCents(subtotal)
@@ -76,6 +101,32 @@ public class PosApiController {
         return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
                 .body(saved);
     }
+
+    //
+    //  GET /api/pos/customers/lookup?email=...
+    //  Returns 200 {userId, displayName} when the email matches a registered user;
+    //  404 when there's no match. Intentionally minimal — this is an
+    //  account-enumeration surface, so it returns only what the POS needs to
+    //  attach the order (id + a name to show), nothing more. Safe here because the
+    //  endpoint is behind the API-key chain (only the terminal can call it).
+
+    @GetMapping("/pos/customers/lookup")
+    public ResponseEntity<?> lookupCustomer(@RequestParam String email) {
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.status(400)
+                    .body(new ErrorResponse("bad_request", "email is required"));
+        }
+        return userService.findByEmail(email.trim())
+                .<ResponseEntity<?>>map(u -> ResponseEntity.ok(
+                        new CustomerMatch(u.getId(), u.getDisplayName())))
+                .orElseGet(() -> ResponseEntity.status(404)
+                        .body(new ErrorResponse("not_found",
+                                "No registered customer with that email.")));
+    }
+
+    public record CustomerMatch(String userId, String displayName) {}
+
+
 
     // ------------------------------------------------------------------
     // Stripe Terminal — connection token + payment intent for in-person
@@ -98,7 +149,7 @@ public class PosApiController {
             throws StripeException {
         if (!props.stripe().isConfigured()) {
             return Map.of("clientSecret", "mock_pi_secret",
-                          "orderId", req.orderId() == null ? "mock_order" : req.orderId());
+                    "orderId", req.orderId() == null ? "mock_order" : req.orderId());
         }
 
         var paramsBuilder = PaymentIntentCreateParams.builder()
@@ -134,17 +185,30 @@ public class PosApiController {
 
     // ---- DTOs ----
 
-    public record PosOrderRequest(@NotEmpty List<PosLineItem> items) {}
+    //  The POS sends userId (from a successful lookup) plus the display name/email
+    //  so the admin views show the customer without a join. All optional — a plain
+    //  walk-up cash sale sends none of them and shows as "Walk-in (POS)".
+
+    public record PosOrderRequest(
+            @NotEmpty List<PosLineItem> items,
+            String eventId,
+            String userId,          // null for walk-in; set when attached to a user
+            String customerName,    // denormalized for display
+            String customerEmail
+    ) {}
 
     public record PosLineItem(
             String menuItemId,
             String name,
             @Positive int quantity,
-            @Positive long unitPriceCents
+            @Positive long unitPriceCents,
+            List<String> modifiers   // "Group: Choice" labels; may be null/empty
     ) {}
 
     public record IntentRequest(
             @Positive long amount,
             String orderId
     ) {}
+
+    public record ErrorResponse(String code, String message) {}
 }

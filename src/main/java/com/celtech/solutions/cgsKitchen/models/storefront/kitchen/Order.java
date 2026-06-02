@@ -45,6 +45,9 @@ public class Order {
     @Indexed
     private Status status;
 
+    @Indexed
+    private String eventId;
+
     private Fulfillment fulfillment;
 
     @Indexed
@@ -65,6 +68,9 @@ public class Order {
     private long deliveryFeeCents;
     private long tipCents;
     private long totalCents;
+
+    @Indexed
+    private PaymentMethod paymentMethod;
 
     private String stripePaymentIntentId;
     private String stripeCheckoutSessionId;
@@ -105,6 +111,7 @@ public class Order {
         REFUNDED
     }
     public enum Fulfillment { PICKUP, DELIVERY, DINE_IN }
+    public enum PaymentMethod { UNPAID, CASH, CARD, OTHER }
 
     @Data
     @Builder

@@ -76,6 +76,50 @@ public class MenuService {
         return grouped;
     }
 
+// ---------- Mutation ----------
+
+    /**
+     * Set a menu item's availability (86 / un-86). Explicit set rather than a
+     * flip, so a double-tap from the POS can't bounce the state back.
+     *
+     * @return the updated item as an assembled view
+     * @throws java.util.NoSuchElementException if the item id is unknown
+     */
+    public MenuItemView setItemAvailable(String itemId, boolean available) {
+        MenuItem item = menuItems.findById(itemId).orElseThrow();
+        item.setAvailable(available);
+        menuItems.save(item);
+        log.info("MenuItem '{}' availability set to {}", itemId, available);
+        return assemble(List.of(item)).get(0);
+    }
+
+    /**
+     * Set an option choice's availability (86 / un-86 a single choice, e.g.
+     * "out of lamb"). Optionally records a reason shown to the customer; the
+     * reason is cleared automatically when the choice is turned back on.
+     *
+     * <p>This is the first write path to {@code OptionChoice.available} — the
+     * admin Thymeleaf editor only toggles whole menu items. Kept here in the
+     * service so any future admin UI for choice-86'ing shares this logic.
+     *
+     * @param reason optional; ignored when {@code available} is true
+     * @throws java.util.NoSuchElementException if the choice id is unknown
+     */
+    public OptionChoice setChoiceAvailable(String choiceId, boolean available, String reason) {
+        OptionChoice choice = optionChoices.findById(choiceId).orElseThrow();
+        choice.setAvailable(available);
+        if (available) {
+            choice.setUnavailableReason(null);
+        } else if (reason != null && !reason.isBlank()) {
+            choice.setUnavailableReason(reason.trim());
+        }
+        optionChoices.save(choice);
+        log.info("OptionChoice '{}' availability set to {}{}",
+                choiceId, available,
+                available ? "" : " (reason: " + choice.getUnavailableReason() + ")");
+        return choice;
+    }
+
     // ---------- Assembly ----------
 
     private List<MenuItemView> assemble(List<MenuItem> items) {
