@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
-    <title th:text="|Checkout — ${brand.brandName()}|">Checkout</title>
+    <title th:text="|${brand.brandName()} : Checkout|">Checkout</title>
     <th:block th:fragment="pageStyles">
         <link rel="stylesheet" th:href="@{/css/pages/checkout.css}">
     </th:block>

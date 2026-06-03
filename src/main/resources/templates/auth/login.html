@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
-    <title th:text="|Sign in — ${brand.brandName()}|">Sign in</title>
+    <title th:text="|${brand.brandName()} : Sign in|">Sign in</title>
     <th:block th:fragment="pageStyles">
         <link rel="stylesheet" th:href="@{/css/pages/auth.css}">
     </th:block>

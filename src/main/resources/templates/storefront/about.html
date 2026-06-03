@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
-    <title th:text="|About — ${brand.brandName()}|">About</title>
+    <title th:text="| ${brand.brandName()} : About |">About</title>
     <th:block th:fragment="pageStyles">
         <link rel="stylesheet" th:href="@{/css/pages/about-contact.css}">
     </th:block>

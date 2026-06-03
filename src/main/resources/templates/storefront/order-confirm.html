@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
-    <title th:text="|Order placed — ${brand.brandName()}|">Order placed</title>
+    <title th:text="|${brand.brandName()} : Order Placed|">Order placed</title>
     <th:block th:fragment="pageStyles">
         <link rel="stylesheet" th:href="@{/css/pages/checkout.css}">
     </th:block>
