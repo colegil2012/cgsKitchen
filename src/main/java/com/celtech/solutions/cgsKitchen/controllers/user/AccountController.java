@@ -1,11 +1,11 @@
 package com.celtech.solutions.cgsKitchen.controllers.user;
 
-import com.celtech.solutions.cgsKitchen.config.AppProperties;
 import com.celtech.solutions.cgsKitchen.models.user.Address;
 import com.celtech.solutions.cgsKitchen.models.user.User;
 import com.celtech.solutions.cgsKitchen.repositories.user.PaymentMethodRepository;
 import com.celtech.solutions.cgsKitchen.services.user.AddressService;
 import com.celtech.solutions.cgsKitchen.services.user.UserService;
+import com.celtech.solutions.cgsKitchen.services.mail.EmailVerificationEmail;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -41,6 +41,7 @@ public class AccountController {
     private final UserService userService;
     private final AddressService addressService;
     private final PaymentMethodRepository paymentMethods;
+    private final EmailVerificationEmail emailVerificationEmail;
 
     private User currentUser(UserDetails principal) {
         return userService.findByEmail(principal.getUsername())
@@ -117,6 +118,25 @@ public class AccountController {
         } catch (IllegalArgumentException ex) {
             redirect.addFlashAttribute("error", ex.getMessage());
         }
+        return "redirect:/account";
+    }
+
+    // ---------- Email verification ----------
+
+    @PostMapping("/resend-verification")
+    public String resendVerification(
+            @AuthenticationPrincipal UserDetails principal,
+            RedirectAttributes redirect
+    ) {
+        User u = currentUser(principal);
+        if (u.isEmailVerified()) {
+            redirect.addFlashAttribute("notice", "Your email is already confirmed.");
+            return "redirect:/account";
+        }
+        String token = userService.issueVerificationToken(u.getId());
+        emailVerificationEmail.send(u, token);
+        redirect.addFlashAttribute("notice",
+                "Confirmation email sent — check your inbox.");
         return "redirect:/account";
     }
 

@@ -1,6 +1,8 @@
 package com.celtech.solutions.cgsKitchen.controllers.user;
 
 import com.celtech.solutions.cgsKitchen.config.AppProperties;
+import com.celtech.solutions.cgsKitchen.models.user.User;
+import com.celtech.solutions.cgsKitchen.services.mail.EmailVerificationEmail;
 import com.celtech.solutions.cgsKitchen.services.user.TurnstileService;
 import com.celtech.solutions.cgsKitchen.services.user.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,23 +31,25 @@ public class AuthController {
     private final UserService userService;
     private final TurnstileService turnstile;
     private final AppProperties props;
+    private final EmailVerificationEmail emailVerificationEmail;
 
     @ModelAttribute("turnstileSiteKey")
     public String turnstileSiteKey() {
         return props.captcha().isConfigured() ? props.captcha().siteKey() : null;
     }
 
-    // ---------- Login ----------
+    /************************************************************************************************************
+     * Login
+     ************************************************************************************************************/
 
     @GetMapping("/login")
     public String loginPage(@RequestParam(required = false) String error,
                             @RequestParam(required = false) Long locked,
                             @RequestParam(required = false) String registered,
+                            @RequestParam(required = false) String reset,
+                            @RequestParam(required = false) String verified,
                             Model model) {
         if (locked != null) {
-            // Account is temporarily locked from too many failed attempts.
-            // We say "this account" not "your account" — the visitor may not
-            // actually own this email; we don't confirm or deny existence.
             model.addAttribute("error",
                     "This account is temporarily locked after too many failed sign-in attempts. " +
                             "Try again in " + locked + " minute" + (locked == 1 ? "" : "s") + ".");
@@ -53,12 +57,20 @@ public class AuthController {
             model.addAttribute("error", "Email or password didn't match. Try again.");
         }
         if (registered != null) {
-            model.addAttribute("notice", "Account created — sign in to continue.");
+            model.addAttribute("notice",
+                    "Account created — check your email to confirm, then sign in.");
+        }
+        if (reset != null) {
+            model.addAttribute("notice", "Password updated — sign in with your new password.");
+        }
+        if (verified != null) {
+            model.addAttribute("notice", "Email confirmed — you can sign in now.");
         }
         return "auth/login";
     }
-
-    // ---------- Register ----------
+    /************************************************************************************************************
+     * Registration
+     ************************************************************************************************************/
 
     @GetMapping("/register")
     public String registerPage(Model model) {
@@ -88,8 +100,10 @@ public class AuthController {
         }
 
         try {
-            userService.register(form.getEmail(), form.getPassword(),
+            User created = userService.register(form.getEmail(), form.getPassword(),
                     form.getDisplayName(), form.getPhone());
+            String token = userService.issueVerificationToken(created.getId());
+            emailVerificationEmail.send(created, token);
         } catch (IllegalArgumentException ex) {
             model.addAttribute("error", ex.getMessage());
             return "auth/register";

@@ -9,4 +9,7 @@ public interface UserRepository extends MongoRepository<User, String> {
     Optional<User> findByEmailIgnoreCase(String email);
     Optional<User> findByStripeCustomerId(String stripeCustomerId);
     boolean existsByEmailIgnoreCase(String email);
+
+    Optional<User> findByEmailValidationToken(String token);
+    Optional<User> findByPasswordResetToken(String token);
 }

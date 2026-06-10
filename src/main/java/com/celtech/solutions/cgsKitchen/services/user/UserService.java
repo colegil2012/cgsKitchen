@@ -7,8 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.EnumSet;
 import java.util.Optional;
 
@@ -33,6 +35,11 @@ public class UserService {
 
     /** How long an account stays locked after threshold is reached. */
     public static final Duration LOCKOUT_DURATION = Duration.ofMinutes(15);
+
+    public static final Duration VERIFY_EMAIL_TOKEN_DURATION = Duration.ofHours(24);
+    public static final Duration RESET_PASSWORD_TOKEN_DURATION = Duration.ofMinutes(30);
+
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final UserRepository users;
     private final PasswordEncoder passwordEncoder;
@@ -59,6 +66,114 @@ public class UserService {
         User saved = users.save(user);
         log.info("Registered new user {} (id={})", saved.getEmail(), saved.getId());
         return saved;
+    }
+
+    // ================================================================
+    //  Email verification
+    // ================================================================
+
+    /**
+     * Generate a fresh verification token, persist it on the user (with a
+     * 24h expiry), and return the raw token so the caller can email it.
+     * Overwrites any existing token — only the latest link works.
+     */
+    public String issueVerificationToken(String userId) {
+        User u = users.findById(userId).orElseThrow();
+        String token = newToken();
+        u.setEmailValidationToken(token);
+        u.setEmailValidationTokenExpiresAt(Instant.now().plus(VERIFY_EMAIL_TOKEN_DURATION));
+        users.save(u);
+        return token;
+    }
+
+    /**
+     * Consume a verification token: if it's valid and unexpired, flip
+     * {@code emailVerified} and clear the token. Returns the verified user,
+     * or empty if the token is unknown/expired.
+     */
+    public Optional<User> verifyEmail(String token) {
+        if (token == null || token.isBlank()) return Optional.empty();
+        Optional<User> maybe = users.findByEmailValidationToken(token);
+        if (maybe.isEmpty()) return Optional.empty();
+
+        User u = maybe.get();
+        if (u.getEmailValidationTokenExpiresAt() == null
+                || u.getEmailValidationTokenExpiresAt().isBefore(Instant.now())) {
+            log.info("Expired verification token for {}", u.getEmail());
+            return Optional.empty();
+        }
+
+        u.setEmailVerified(true);
+        u.setEmailValidationToken(null);
+        u.setEmailValidationTokenExpiresAt(null);
+        users.save(u);
+        log.info("Email verified for {}", u.getEmail());
+        return Optional.of(u);
+    }
+
+    // ================================================================
+    //  Password reset
+    // ================================================================
+
+    /**
+     * Begin a password reset. Looks the user up by email; if found, issues a
+     * short-lived token and returns the user (so the caller can email the
+     * link). Returns empty if no such account — callers should NOT reveal
+     * that difference to the requester (always show "if an account exists,
+     * we sent a link").
+     */
+    public Optional<User> issuePasswordResetToken(String email) {
+        if (email == null || email.isBlank()) return Optional.empty();
+        Optional<User> maybe = users.findByEmailIgnoreCase(email.trim().toLowerCase());
+        if (maybe.isEmpty()) return Optional.empty();
+
+        User u = maybe.get();
+        u.setPasswordResetToken(newToken());
+        u.setPasswordResetTokenExpiresAt(Instant.now().plus(RESET_PASSWORD_TOKEN_DURATION));
+        users.save(u);
+        log.info("Issued password-reset token for {}", u.getEmail());
+        return Optional.of(u);
+    }
+
+    /**
+     * Validate a reset token without consuming it — used by the GET handler
+     * to decide whether to show the new-password form or an "expired link"
+     * message.
+     */
+    public Optional<User> findByValidPasswordResetToken(String token) {
+        if (token == null || token.isBlank()) return Optional.empty();
+        return users.findByPasswordResetToken(token)
+                .filter(u -> u.getPasswordResetTokenExpiresAt() != null
+                        && u.getPasswordResetTokenExpiresAt().isAfter(Instant.now()));
+    }
+
+    /**
+     * Complete a password reset: validate the token, set the new hashed
+     * password, clear the token, and (defensively) clear any lockout.
+     * Returns the updated user, or empty if the token is invalid/expired.
+     */
+    public Optional<User> resetPassword(String token, String newPassword) {
+        Optional<User> maybe = findByValidPasswordResetToken(token);
+        if (maybe.isEmpty()) {
+            log.info("Rejected password reset — invalid/expired token");
+            return Optional.empty();
+        }
+        User u = maybe.get();
+        u.setPasswordHash(passwordEncoder.encode(newPassword));
+        u.setPasswordResetToken(null);
+        u.setPasswordResetTokenExpiresAt(null);
+        u.setFailedLoginCount(0);
+        u.setLockedUntil(null);
+        users.save(u);
+        log.info("Password reset completed for {}", u.getEmail());
+        return Optional.of(u);
+    }
+
+    /** URL-safe 256-bit random token. */
+    private static String newToken() {
+        byte[] bytes = new byte[32];
+        RANDOM.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
     public Optional<User> findByEmail(String email) {

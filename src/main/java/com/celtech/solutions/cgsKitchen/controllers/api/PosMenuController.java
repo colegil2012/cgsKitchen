@@ -1,4 +1,4 @@
-package com.celtech.solutions.cgsKitchen.controllers.api.pos;
+package com.celtech.solutions.cgsKitchen.controllers.api;
 
 import com.celtech.solutions.cgsKitchen.models.storefront.menu.meta.OptionChoice;
 import com.celtech.solutions.cgsKitchen.models.storefront.menu.view.MenuItemView;

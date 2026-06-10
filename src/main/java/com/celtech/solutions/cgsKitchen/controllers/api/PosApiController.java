@@ -1,4 +1,4 @@
-package com.celtech.solutions.cgsKitchen.controllers.api.pos;
+package com.celtech.solutions.cgsKitchen.controllers.api;
 
 import com.celtech.solutions.cgsKitchen.config.AppProperties;
 import com.celtech.solutions.cgsKitchen.models.storefront.kitchen.Order;
@@ -72,8 +72,22 @@ public class PosApiController {
         long subtotal = req.items().stream()
                 .mapToLong(i -> i.unitPriceCents() * i.quantity())
                 .sum();
-        long tax = Math.round(subtotal * 0.07);
+        long tax = Math.round(subtotal * props.storefront().taxRate());
         long total = subtotal + tax;
+
+        // If a registered user is attached, trust the account's email over
+        // whatever the terminal echoed back (avoids typos / stale values).
+        String customerEmail = req.customerEmail();
+        String customerName = req.customerName();
+        if (req.userId() != null && !req.userId().isBlank()) {
+            var u = userService.findById(req.userId()).orElse(null);
+            if (u != null) {
+                customerEmail = u.getEmail();
+                if (customerName == null || customerName.isBlank()) {
+                    customerName = u.getDisplayName();
+                }
+            }
+        }
 
         var order = Order.builder()
                 .source(Order.Source.POS)
@@ -82,8 +96,8 @@ public class PosApiController {
                 .fulfillment(Order.Fulfillment.PICKUP)
                 .eventId(req.eventId())
                 .userId(req.userId())
-                .customerName(req.customerName())
-                .customerEmail(req.customerEmail())
+                .customerName(customerName)
+                .customerEmail(customerEmail)
                 .items(req.items().stream()
                         .map(i -> Order.LineItem.builder()
                                 .menuItemId(i.menuItemId())
@@ -118,13 +132,13 @@ public class PosApiController {
         }
         return userService.findByEmail(email.trim())
                 .<ResponseEntity<?>>map(u -> ResponseEntity.ok(
-                        new CustomerMatch(u.getId(), u.getDisplayName())))
+                        new CustomerMatch(u.getId(), u.getEmail(), u.getDisplayName())))
                 .orElseGet(() -> ResponseEntity.status(404)
                         .body(new ErrorResponse("not_found",
                                 "No registered customer with that email.")));
     }
 
-    public record CustomerMatch(String userId, String displayName) {}
+    public record CustomerMatch(String userId, String email, String displayName) {}
 
 
 

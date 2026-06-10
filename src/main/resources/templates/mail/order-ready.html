@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{mail/layout :: head(${'Order confirmed'})}"></head>
+<body th:replace="~{mail/layout :: body(~{::content})}">
+<th:block th:fragment="content">
+    <h1 style="font-size:22px; margin:0 0 16px;">Your Order is Ready!</h1>
+    <p style="margin:0 0 16px; line-height:1.5;">
+        We've received your order and payment. Here's your receipt.
+    </p>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
+        <tr th:each="li : ${order.items}">
+            <td style="padding:6px 0; border-bottom:1px solid #f0eee9;">
+                <span th:text="${li.quantity} + '× '">2× </span>
+                <span th:text="${li.name}">Item</span>
+            </td>
+            <td align="right" style="padding:6px 0; border-bottom:1px solid #f0eee9;"
+                th:text="'$' + ${#numbers.formatDecimal((li.unitPriceCents * li.quantity) / 100.0, 1, 2)}">$0.00</td>
+        </tr>
+    </table>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+            <td style="padding:4px 0;">Subtotal</td>
+            <td align="right" th:text="'$' + ${#numbers.formatDecimal(order.subtotalCents / 100.0, 1, 2)}">$0.00</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 0;">Tax</td>
+            <td align="right" th:text="'$' + ${#numbers.formatDecimal(order.taxCents / 100.0, 1, 2)}">$0.00</td>
+        </tr>
+        <tr th:if="${order.deliveryFeeCents > 0}">
+            <td style="padding:4px 0;">Delivery</td>
+            <td align="right" th:text="'$' + ${#numbers.formatDecimal(order.deliveryFeeCents / 100.0, 1, 2)}">$0.00</td>
+        </tr>
+        <tr>
+            <td style="padding:8px 0; font-weight:bold; border-top:2px solid #23201c;">Total</td>
+            <td align="right" style="padding:8px 0; font-weight:bold; border-top:2px solid #23201c;"
+                th:text="'$' + ${#numbers.formatDecimal(order.totalCents / 100.0, 1, 2)}">$0.00</td>
+        </tr>
+    </table>
+
+    <p style="margin:20px 0 8px; font-size:13px; color:#888;">
+        Reference: <span th:text="${order.id}">id</span>
+    </p>
+
+    <p style="margin:24px 0 0;">
+        <a th:href="${orderUrl}"
+           style="background:#1c3a2e; color:#fff; padding:12px 22px; border-radius:6px; text-decoration:none; display:inline-block;">
+            View your order
+        </a>
+    </p>
+</th:block>
+</body>
+</html>

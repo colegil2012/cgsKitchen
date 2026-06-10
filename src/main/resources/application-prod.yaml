@@ -13,9 +13,6 @@ spring:
   web:
     resources:
       cache:
-        # 1 year, matches the immutable-asset convention. If you change
-        # this, also make sure /css and /scripts URLs are versioned so
-        # cache busts work.
         period: ${STATIC_RESOURCE_CACHE:31536000}
 
 server:
@@ -26,8 +23,6 @@ server:
         same-site: lax
         http-only: true
 
-# Tighter logging — DEBUG floods prod logs and leaks request headers
-# from Spring Security.
 logging:
   level:
     root: INFO
@@ -36,7 +31,7 @@ logging:
     org.springframework.security.web: WARN
 
 app:
-  cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:https://celtechgs.kitchen}
+  cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:https://celtechgs.kitchen,https://www.celtechgs.kitchen}
   cookies:
     secure: ${COOKIE_SECURE:true}
   checkout:

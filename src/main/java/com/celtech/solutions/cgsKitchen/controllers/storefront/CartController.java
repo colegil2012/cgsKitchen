@@ -237,6 +237,7 @@ public class CartController {
         model.addAttribute("stripePublishableKey", props.stripe().publishableKey());
         model.addAttribute("orderId", order.getId());
         model.addAttribute("orderTotalCents", order.getTotalCents());
+        model.addAttribute("taxRate", props.storefront().taxRate());
         model.addAttribute("checkoutDebugJs", props.checkout() != null && props.checkout().debugJs());
         return "storefront/checkout";
     }
@@ -528,9 +529,7 @@ public class CartController {
                                Authentication auth,
                                Model model) {
         Order order = null;
-        if (session_id != null) {
-            order = orderService.findByCheckoutSessionId(session_id).orElse(null);
-        } else if (paymentIntentId != null) {
+        if (paymentIntentId != null) {
             order = orderService.findByPaymentIntentId(paymentIntentId).orElse(null);
         }
         if (order != null) {

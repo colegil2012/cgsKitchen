@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title th:text="|${brand.brandName()} : Email verification|">Email verification</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/auth.css}">
+    </th:block>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="auth">
+    <div class="auth__card">
+        <header class="auth__header">
+            <span class="stamp text-muted">Account</span>
+            <h1 class="auth__title" th:if="${verified}">Email confirmed</h1>
+            <h1 class="auth__title" th:unless="${verified}">Link not valid</h1>
+        </header>
+
+        <div class="alert alert-success" th:if="${verified}">
+            Thanks — your email address is confirmed. You're all set.
+        </div>
+        <div class="alert alert-error" th:unless="${verified}">
+            This verification link is invalid or has expired. Sign in and we
+            can send you a fresh one.
+        </div>
+
+        <p class="auth__alt">
+            <a class="btn btn-primary btn-lg auth__submit" th:href="@{/login}">Go to sign in →</a>
+        </p>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

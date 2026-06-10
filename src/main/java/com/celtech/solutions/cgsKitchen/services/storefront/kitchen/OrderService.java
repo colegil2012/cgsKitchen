@@ -1,5 +1,6 @@
 package com.celtech.solutions.cgsKitchen.services.storefront.kitchen;
 
+import com.celtech.solutions.cgsKitchen.config.AppProperties;
 import com.celtech.solutions.cgsKitchen.models.storefront.shop.Cart;
 import com.celtech.solutions.cgsKitchen.models.storefront.kitchen.Order;
 import com.celtech.solutions.cgsKitchen.repositories.storefront.kitchen.OrderRepository;
@@ -36,11 +37,11 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class OrderService {
 
-    private static final double TAX_RATE = 0.07;
     private static final Duration PENDING_TTL = Duration.ofDays(30);
 
     private final OrderRepository orders;
     private final KitchenQuoteService kitchenQuotes;
+    private final AppProperties props;
 
     /**
      * Create a PENDING_PAYMENT order from the current cart's line items.
@@ -56,7 +57,8 @@ public class OrderService {
                                 String customerPhone, String deliveryAddress,
                                 long deliveryFeeCents,
                                 String eventId) {
-        long tax = Math.round(subtotalCents * TAX_RATE);
+        double taxRate = props.storefront() == null ? 0.07 : props.storefront().taxRate();
+        long tax = Math.round(subtotalCents * taxRate);
         long total = subtotalCents + tax + deliveryFeeCents;
 
         var lineItems = mapCartLines(cartLines);
@@ -107,7 +109,9 @@ public class OrderService {
             return order;
         }
 
-        long tax = Math.round(subtotalCents * TAX_RATE);
+        double taxRate = props.storefront() == null ? 0.07 : props.storefront().taxRate();
+
+        long tax = Math.round(subtotalCents * taxRate);
         long total = subtotalCents + tax + deliveryFeeCents;
 
         order.setFulfillment(fulfillment);
@@ -147,10 +151,6 @@ public class OrderService {
         return orders.findById(id);
     }
 
-    public Optional<Order> findByCheckoutSessionId(String sessionId) {
-        return orders.findByStripeCheckoutSessionId(sessionId);
-    }
-
     public Optional<Order> findByPaymentIntentId(String paymentIntentId) {
         return orders.findByStripePaymentIntentId(paymentIntentId);
     }
@@ -185,8 +185,43 @@ public class OrderService {
      * {@code cutoff}. Used by {@code AbandonedCheckoutSweeper} to cancel
      * stale Stripe PaymentIntents before their Mongo TTL fires.
      */
-    public List<Order> findPendingPaymentOlderThan(java.time.Instant cutoff) {
+    public List<Order> findPendingPaymentOlderThan(Instant cutoff) {
         return orders.findByStatusAndCreatedAtBefore(Order.Status.PENDING_PAYMENT, cutoff);
+    }
+
+    /**
+     * Idempotently transition an order to PAID. Returns true if this call
+     * performed the transition, false if the order was already PAID (or
+     * beyond) or doesn't exist.
+     *
+     * <p>Captures the charge id if provided and not already set, and clears
+     * the pending-order TTL so a paid order never gets reaped. Does NOT
+     * detach the cart pointer or write the audit event — callers that need
+     * those (the webhook) layer them on; the reconciliation job records its
+     * own audit reason. Centralizing the core status flip here keeps the
+     * webhook and the reconciler from drifting apart.
+     */
+    public boolean markPaidIfPending(String orderId, String chargeId) {
+        Order order = orders.findById(orderId).orElse(null);
+        if (order == null) return false;
+        boolean changed = false;
+        if (chargeId != null && order.getStripeChargeId() == null) {
+            order.setStripeChargeId(chargeId);
+            changed = true;
+        }
+        if (order.getStatus() == Order.Status.PENDING_PAYMENT) {
+            order.setStatus(Order.Status.PAID);
+            order.setExpiresAt(null);
+            changed = true;
+        }
+        if (changed) {
+            orders.save(order);
+        }
+        // True when this call actually transitioned the order to PAID
+        // (the reconciler uses this to decide whether to write an audit
+        // event). A pure charge-id backfill without a status change
+        // returns false — no transition happened.
+        return order.getStatus() == Order.Status.PAID && changed;
     }
 
     public Order save(Order order) {

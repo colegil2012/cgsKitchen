@@ -6,12 +6,14 @@ import com.celtech.solutions.cgsKitchen.models.user.PaymentMethod;
 import com.celtech.solutions.cgsKitchen.models.user.User;
 import com.celtech.solutions.cgsKitchen.repositories.user.PaymentMethodRepository;
 import com.celtech.solutions.cgsKitchen.repositories.user.UserRepository;
+import com.celtech.solutions.cgsKitchen.services.mail.OrderConfirmationEmail;
 import com.celtech.solutions.cgsKitchen.services.storefront.kitchen.OrderEventService;
 import com.celtech.solutions.cgsKitchen.services.storefront.kitchen.OrderService;
 import com.celtech.solutions.cgsKitchen.services.storefront.shop.CartService;
 import com.celtech.solutions.cgsKitchen.services.storefront.shop.PaymentMetrics;
 import com.celtech.solutions.cgsKitchen.services.webhooks.OrderLockService;
 import com.celtech.solutions.cgsKitchen.services.webhooks.WebhookEventService;
+import com.celtech.solutions.cgsKitchen.services.webhooks.WebhookHandlerFailedEvent;
 import com.stripe.exception.EventDataObjectDeserializationException;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Charge;
@@ -20,10 +22,10 @@ import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.Refund;
 import com.stripe.model.StripeObject;
-import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -67,6 +69,8 @@ public class StripeWebhookController {
     private final OrderLockService orderLocks;
     private final OrderEventService orderEvents;
     private final PaymentMetrics metrics;
+    private final ApplicationEventPublisher events;
+    private final OrderConfirmationEmail orderConfirmationEmail;
 
     @PostMapping
     public ResponseEntity<String> handle(
@@ -99,10 +103,14 @@ public class StripeWebhookController {
         try {
             dispatch(event);
             if (receipt.isNew()) webhookEvents.markProcessed(receipt.event());
+            metrics.webhookEvent("stripe", event.getType(), "processed");
         } catch (Exception e) {
             log.error("Webhook handler failed for {} ({})",
                     event.getType(), event.getId(), e);
             if (receipt.isNew()) webhookEvents.markFailed(receipt.event(), e.getMessage());
+            metrics.webhookEvent("stripe", event.getType(), "failed");
+            events.publishEvent(new WebhookHandlerFailedEvent(
+                    "stripe", event.getId(), event.getType(), e.getMessage()));
             return ResponseEntity.status(500).body("Handler failed");
         }
 
@@ -112,7 +120,6 @@ public class StripeWebhookController {
     private void dispatch(Event event) {
         switch (event.getType()) {
             case "payment_intent.succeeded" -> handleIntentSucceeded(event);
-            case "checkout.session.completed" -> handleCheckoutCompleted(event);
             case "payment_method.attached" -> handlePaymentMethodAttached(event);
             case "payment_method.detached" -> handlePaymentMethodDetached(event);
             case "payment_method.updated" -> handlePaymentMethodUpdated(event);
@@ -191,23 +198,11 @@ public class StripeWebhookController {
         metrics.paymentSucceeded();
         orderEvents.record(orderId, prev, Order.Status.PAID,
                 "stripe-webhook", null, triggerEvent);
-        log.info("Order {} → PAID (charge={})", order.getId(), chargeId);
-    }
 
-    private void handleCheckoutCompleted(Event event) {
-        Session session = deserialize(event, Session.class);
-        Order order = orderService.findByCheckoutSessionId(session.getId()).orElse(null);
-        if (order == null) {
-            log.warn("Checkout completed for unknown session: {}", session.getId());
-            return;
-        }
-        if (session.getPaymentIntent() != null && order.getStripePaymentIntentId() == null) {
-            order.setStripePaymentIntentId(session.getPaymentIntent());
-            orderService.save(order);
-        }
-        final String orderId = order.getId();
-        orderLocks.withLock(orderId,
-                () -> markPaid(orderId, null, "checkout.session.completed"));
+        //All other mailers live in @OrderTransitionService
+        //Have to wait on Stripe Webhook response to confirm cards, so this one lives here
+        orderConfirmationEmail.send(order);
+        log.info("Order {} → PAID (charge={})", order.getId(), chargeId);
     }
 
     // ================================================================

@@ -30,7 +30,7 @@
     const script = document.currentScript;
 
     const DEBUG = script.dataset.debug === 'true';
-    const TAX_RATE = 0.07;
+    const TAX_RATE = parseFloat(script.dataset.taxRate) || 0.07;
     const UPDATE_DEBOUNCE_MS = 300;
 
     const cfg = {

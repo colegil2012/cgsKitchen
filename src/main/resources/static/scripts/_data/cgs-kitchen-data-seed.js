@@ -28,6 +28,8 @@ targetDb.categories.drop();
 targetDb.orders.drop();
 targetDb.users.drop();
 targetDb.carts.drop();
+targetDb.events.drop();
+targetDb.event_series.drop();
 targetDb.addresses.drop();
 
 //Webhook and order audit logs

@@ -3,6 +3,8 @@ package com.celtech.solutions.cgsKitchen.services.storefront.kitchen;
 import com.celtech.solutions.cgsKitchen.config.AppProperties;
 import com.celtech.solutions.cgsKitchen.delivery.DeliveryProvider;
 import com.celtech.solutions.cgsKitchen.models.storefront.kitchen.Order;
+import com.celtech.solutions.cgsKitchen.services.mail.OrderConfirmationEmail;
+import com.celtech.solutions.cgsKitchen.services.mail.OrderReadyEmail;
 import com.celtech.solutions.cgsKitchen.services.webhooks.OrderLockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +42,10 @@ public class OrderTransitionService {
     private final DeliveryEventService deliveryEvents;
     private final OrderLockService orderLocks;
     private final AppProperties props;
+
+    /** Email Handlers **/
+    private final OrderConfirmationEmail orderConfirmationEmail;
+    private final OrderReadyEmail orderReadyEmail;
 
     /** Optional — null in test profiles or no-delivery deployments. */
     @Autowired(required = false)
@@ -109,6 +115,12 @@ public class OrderTransitionService {
             boolean dispatched = false;
             if (target == Order.Status.IN_KITCHEN) {
                 dispatched = maybeDispatchDelivery(saved, actor);
+            }
+
+            /** Order is ready for pickup **/
+            /** If Delivery, User knows food is ready for courier **/
+            if (target == Order.Status.READY) {
+                orderReadyEmail.send(order);
             }
 
             return TransitionResult.success(saved, previous, dispatched);
@@ -267,6 +279,10 @@ public class OrderTransitionService {
                     "pos", actor, note == null ? "cash payment" : note);
             log.info("Order {} : {} → PAID (pos cash{})",
                     orderId, previous, actor == null ? "" : " by " + actor);
+
+            if (order.getCustomerEmail() != null) {
+                orderConfirmationEmail.send(order);
+            }
 
             return TransitionResult.success(saved, previous, false);
         });

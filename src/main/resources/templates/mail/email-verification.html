@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{mail/layout :: head(${'Confirm your email'})}"></head>
+<body th:replace="~{mail/layout :: body(~{::content})}">
+<th:block th:fragment="content">
+    <h1 style="font-size:22px; margin:0 0 16px;">Confirm your email</h1>
+    <p style="margin:0 0 16px; line-height:1.5;">
+        <span th:if="${displayName}" th:text="'Hi ' + ${displayName} + ','">Hi there,</span>
+        <span th:unless="${displayName}">Hi there,</span>
+    </p>
+    <p style="margin:0 0 20px; line-height:1.5;">
+        Tap the button below to confirm this email address and finish setting up your account.
+    </p>
+    <p style="margin:0 0 24px;">
+        <a th:href="${verifyUrl}"
+           style="background:#1c3a2e; color:#fff; padding:12px 22px; border-radius:6px; text-decoration:none; display:inline-block;">
+            Confirm email
+        </a>
+    </p>
+    <p style="margin:0; font-size:12px; color:#888; line-height:1.5;">
+        If the button doesn't work, copy and paste this link:<br>
+        <a th:href="${verifyUrl}" th:text="${verifyUrl}" style="color:#1c3a2e; word-break:break-all;">link</a>
+    </p>
+</th:block>
+</body>
+</html>

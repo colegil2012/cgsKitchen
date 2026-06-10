@@ -52,9 +52,16 @@ public class User {
     /** Stripe Customer id (cus_...). Null until first authenticated checkout. */
     private String stripeCustomerId;
 
-    /** Reserved for the confirmation flow we'll add later. */
     @Builder.Default
     private boolean emailVerified = false;
+
+    /** Single use token for email validation. */
+    private String emailValidationToken;
+    private Instant emailValidationTokenExpiresAt;
+
+    /** Single use token for password reset. */
+    private String passwordResetToken;
+    private Instant passwordResetTokenExpiresAt;
 
     /** Soft-disable without deleting the record (refunds, audit). */
     @Builder.Default
@@ -69,21 +76,15 @@ public class User {
      */
     @Builder.Default
     private int failedLoginCount = 0;
-
-    /**
-     * Until this instant, login is rejected even with the correct
-     * password. Null = not locked. Set after threshold failed attempts;
-     * cleared on successful login or after the time elapses.
-     */
     private Instant lockedUntil;
-
-    @CreatedDate private Instant createdAt;
-    @LastModifiedDate private Instant updatedAt;
 
     /** True if currently locked out (defensive — UserDetails maps this to accountNonLocked). */
     public boolean isLocked() {
         return lockedUntil != null && lockedUntil.isAfter(Instant.now());
     }
+
+    @CreatedDate private Instant createdAt;
+    @LastModifiedDate private Instant updatedAt;
 
     public enum Role {
         CUSTOMER,

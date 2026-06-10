@@ -1,6 +1,5 @@
 package com.celtech.solutions.cgsKitchen.models.storefront.shop;
 
-import com.celtech.solutions.cgsKitchen.models.storefront.menu.view.MenuItemView;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

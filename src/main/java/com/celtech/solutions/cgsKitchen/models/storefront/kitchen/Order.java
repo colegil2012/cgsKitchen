@@ -73,7 +73,6 @@ public class Order {
     private PaymentMethod paymentMethod;
 
     private String stripePaymentIntentId;
-    private String stripeCheckoutSessionId;
     private String stripeChargeId;
 
     private String deliveryProvider;
@@ -99,7 +98,10 @@ public class Order {
     @CreatedDate private Instant createdAt;
     @LastModifiedDate private Instant updatedAt;
 
-    public enum Source { WEB, POS, KIOSK }
+    public enum Source {
+        WEB,
+        POS,
+        KIOSK }
     public enum Status {
         PENDING_PAYMENT,
         PAID,
@@ -110,8 +112,15 @@ public class Order {
         CANCELLED,
         REFUNDED
     }
-    public enum Fulfillment { PICKUP, DELIVERY, DINE_IN }
-    public enum PaymentMethod { UNPAID, CASH, CARD, OTHER }
+    public enum Fulfillment {
+        PICKUP,
+        DELIVERY,
+        DINE_IN }
+    public enum PaymentMethod {
+        UNPAID,
+        CASH,
+        CARD,
+        OTHER }
 
     @Data
     @Builder

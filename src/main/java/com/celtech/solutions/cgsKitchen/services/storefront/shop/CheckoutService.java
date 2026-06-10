@@ -47,9 +47,6 @@ import java.util.List;
  * {@link #ensurePaymentIntent(Order, String, boolean)} on /checkout render
  * and {@link #updatePaymentIntent(Order, boolean)} when totals change.
  *
- * <p>The legacy redirect-to-Stripe-Checkout flow lives in
- * {@link #createCheckoutSession} and is kept for fallback.
- *
  * <p>Mock mode: if STRIPE_SECRET_KEY isn't configured, the legacy path
  * returns a fake URL. The Elements path throws — controller surfaces
  * a friendly error.

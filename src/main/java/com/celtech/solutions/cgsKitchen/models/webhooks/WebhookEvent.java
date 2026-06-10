@@ -48,14 +48,8 @@ public class WebhookEvent {
 
     /** "stripe" or "uber". */
     private String provider;
-
-    /** Provider's event id (Stripe: evt_..., Uber: evt_...). */
     private String eventId;
-
-    /** Event kind/type — purely for queries/debugging, not used for dedup. */
     private String eventType;
-
-    /** Raw payload as received. Allows replay and forensic analysis. */
     private String payload;
 
     /** Processing outcome — "processed", "skipped", "failed". */

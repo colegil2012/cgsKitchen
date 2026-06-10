@@ -8,6 +8,7 @@ import java.util.List;
 public record AppProperties(
         String clientId,
         String apiKey,
+        String baseUrl,
         List<String> corsAllowedOrigins,
         Security security,
         Cookies cookies,
@@ -16,7 +17,9 @@ public record AppProperties(
         Delivery delivery,
         Captcha captcha,
         Kitchen kitchen,
-        Checkout checkout
+        Checkout checkout,
+        Events events,
+        Mail mail
 ) {
 
     public record Security(
@@ -41,18 +44,9 @@ public record AppProperties(
             String instagramUrl,
             String facebookUrl,
             String timezone,
-            Images images
+            Images images,
+            double taxRate
     ) {}
-
-    public record Captcha(
-            String siteKey,
-            String secretKey
-    ) {
-        public boolean isConfigured() {
-            return siteKey != null && !siteKey.isBlank()
-                    && secretKey != null && !secretKey.isBlank();
-        }
-    }
 
     public record Stripe(
             String secretKey,
@@ -74,6 +68,16 @@ public record AppProperties(
         public boolean isMock() { return "mock".equalsIgnoreCase(provider); }
         public boolean isDoorDash() { return "doordash".equalsIgnoreCase(provider); }
         public boolean isUber() { return "uber".equalsIgnoreCase(provider); }
+    }
+
+    public record Captcha(
+            String siteKey,
+            String secretKey
+    ) {
+        public boolean isConfigured() {
+            return siteKey != null && !siteKey.isBlank()
+                    && secretKey != null && !secretKey.isBlank();
+        }
     }
 
     public record DoorDash(
@@ -107,6 +111,18 @@ public record AppProperties(
     ) {}
 
     public record Checkout(boolean debugJs) {}
+
+    public record Events(
+            long autoCloseGraceHours,
+            long activationLeadTimeMinutes
+    ) {}
+
+    public record Mail(
+            boolean enabled,
+            String from,
+            String fromName,
+            String replyTo
+    ) {}
 
     public record Images(
             String baseUrl,

@@ -15,11 +15,32 @@ spring:
     uri: ${MONGODB_URI:mongodb://localhost:27017/cgskitchen}
     auto-index-creation: true
 
+  # ---------------------------------------------------------------------------
+  # Spring Sessions
+  # ---------------------------------------------------------------------------
   session:
     timeout: 2h
     data:
       mongodb:
         collection-name: sessions
+
+  # ---------------------------------------------------------------------------
+  # Spring Mail
+  # ---------------------------------------------------------------------------
+  mail:
+    host: ${MAIL_SMTP_HOST:smtp.office365.com}
+    port: ${MAIL_SMTP_PORT:587}
+    username: ${MAIL_SMTP_USERNAME:cole@celtechgs.com}
+    password: ${MAIL_SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          connectiontimeout: 3000
+          timeout: 3000
+          writetimeout: 3000
+          auth: true
+          starttls:
+            enable: true
 
   # ---------------------------------------------------------------------------
   # Thymeleaf — disable cache in dev for live reload
@@ -53,6 +74,9 @@ management:
     web:
       exposure:
         include: health,info,metrics,prometheus
+  health:
+    mail:
+      enabled: false
   endpoint:
     health:
       probes:
@@ -68,6 +92,7 @@ management:
 app:
   client-id: ${CLIENT_ID:celtech-kitchen}
   api-key: ${API_KEY:dev-shared-key-change-me}
+  base-url: ${BASE_URL:http://localhost:8080}
   cors-allowed-origins: ${CORS_ORIGINS:http://localhost:8080,http://localhost:3001,http://localhost:5173,http://localhost:5174,http://localhost:5175}
 
   security:
@@ -94,8 +119,9 @@ app:
       hero-path: ${HERO_PATH:/images/hero.jpg}
       og-image-path: ${OG_IMAGE_PATH:/images/og-image.jpg}
       favicon-path: ${FAVICON_PATH:/images/favicon.ico}
-    instagram-url: ${INSTAGRAM_URL}
-    facebook-url: ${FACEBOOK_URL:https://facebook.com/celtechgs}
+    instagram-url: ${INSTAGRAM_URL:}
+    facebook-url: ${FACEBOOK_URL:}
+    tax-rate: ${TAX_RATE:0.07}
 
   stripe:
     secret-key: ${STRIPE_SECRET_KEY:}
@@ -116,13 +142,35 @@ app:
       client-secret: ${UBER_CLIENT_SECRET:}
       webhook-signing-key: ${UBER_WEBHOOK_SIGNING_KEY:}
 
+#==============================================================================
+# Kitchen Configuration
+# Capacity is metric for kitchen capacity, 2 ~ 1 single operator
+#                                          3-4 ~ 2 operators kitchen/pos split
+#                                          5+ ~ 3+ operators full-staff
+#==============================================================================
+
   kitchen:
-    # How many concurrent orders the kitchen can work on. Solo cook = 2.
-    # Two cooks with shared assembly = 3-4. Override per env via
-    # KITCHEN_CAPACITY env var if you want.
     capacity: ${KITCHEN_CAPACITY:2}
     default-item-prep-minutes: ${KITCHEN_DEFAULT_ITEM_PREP_MINUTES:10}
     per-item-surcharge-minutes: ${KITCHEN_PER_ITEM_SURCHARGE_MINUTES:1}
+
+#==============================================================================
+# Event Configuration
+#==============================================================================
+
+  events:
+    auto-close-grace-hours: ${EVENTS_AUTO_CLOSE_GRACE_HOURS:4}
+    activation-lead-time-minutes: ${EVENTS_ACTIVATION_LEAD_TIME_MINUTES:15}
+
+#==============================================================================
+# Mailer Configuration
+#==============================================================================
+
+  mail:
+    enabled: ${MAIL_ENABLED:true}
+    from: ${MAIL_FROM:support@celtechgs.com}
+    from-name: ${MAIL_FROM_NAME:Celtech Kitchen}
+    reply-to: ${MAIL_REPLY_TO:cole@celtechgs.com}
 
   checkout:
     debug-js: ${CHECKOUT_DEBUG_JS:false}

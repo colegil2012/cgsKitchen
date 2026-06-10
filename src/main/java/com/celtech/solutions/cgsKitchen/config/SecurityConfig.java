@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -86,7 +87,7 @@ public class SecurityConfig {
     // ----------------------------------------------------------------
     @Bean
     @Order(1)
-    public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain apiFilterChain(HttpSecurity http) {
         http
                 .securityMatcher("/api/**", "/webhooks/**", "/actuator/**")
                 .csrf(AbstractHttpConfigurer::disable)
@@ -111,11 +112,12 @@ public class SecurityConfig {
     // ----------------------------------------------------------------
     @Bean
     @Order(2)
-    public SecurityFilterChain storefrontFilterChain(HttpSecurity http, AuthHandlers handlers) throws Exception {
+    public SecurityFilterChain storefrontFilterChain(HttpSecurity http, AuthHandlers handlers) {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/menu", "/menu/**", "/about", "/contact", "/events").permitAll()
-                        .requestMatchers("/login", "/register", "/logout").permitAll()
+                        .requestMatchers("/login", "/register", "/logout", "/error").permitAll()
+                        .requestMatchers("/verify-email", "/forgot-password", "/reset-password").permitAll()
                         .requestMatchers("/css/**", "/scripts/**", "/images/**", "/favicon.ico").permitAll()
                         .requestMatchers("/cart/**").permitAll()
                         .requestMatchers("/checkout", "/checkout/**", "/order/**").permitAll()
@@ -170,8 +172,8 @@ public class SecurityConfig {
         @Override
         protected void doFilterInternal(
                 HttpServletRequest request,
-                HttpServletResponse response,
-                FilterChain chain) throws ServletException, IOException {
+                @NonNull HttpServletResponse response,
+                @NonNull FilterChain chain) throws ServletException, IOException {
 
             String header = request.getHeader("X-API-Key");
             if (header == null) {

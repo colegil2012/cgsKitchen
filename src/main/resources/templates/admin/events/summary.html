@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(~{::title}, ~{::pageStyles})}">
+    <title th:text="|Summary : ${brand.brandName()} Admin|">Event summary</title>
+    <th:block th:fragment="pageStyles">
+        <link rel="stylesheet" th:href="@{/css/pages/admin.css}">
+    </th:block>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="admin">
+    <div class="container">
+        <header class="admin__header">
+            <a class="admin__link" th:href="@{/admin/events}">Events</a>
+            <h1 class="admin__title" th:text="${event.title}">Event</h1>
+            <p class="text-muted"
+               th:if="${event.startAt != null}"
+               th:text="${#temporals.format(event.startAt.atZone(zoneId), 'EEEE, MMMM d, yyyy')}">
+                date</p>
+        </header>
+
+        <!-- ===== Income tiles ===== -->
+        <section class="admin__stats">
+            <div class="admin__stat admin__stat--accent">
+                <div class="admin__stat-label">Total sales</div>
+                <div class="admin__stat-value"
+                     th:text="|$${#numbers.formatDecimal(summary.income.totalCents / 100.0, 1, 2)}|">$0.00</div>
+            </div>
+            <div class="admin__stat">
+                <div class="admin__stat-label">Card</div>
+                <div class="admin__stat-value"
+                     th:text="|$${#numbers.formatDecimal(summary.income.cardCents / 100.0, 1, 2)}|">$0.00</div>
+            </div>
+            <div class="admin__stat">
+                <div class="admin__stat-label">Cash</div>
+                <div class="admin__stat-value"
+                     th:text="|$${#numbers.formatDecimal(summary.income.cashCents / 100.0, 1, 2)}|">$0.00</div>
+            </div>
+            <div class="admin__stat" th:if="${summary.income.otherCents > 0}">
+                <div class="admin__stat-label">Other</div>
+                <div class="admin__stat-value"
+                     th:text="|$${#numbers.formatDecimal(summary.income.otherCents / 100.0, 1, 2)}|">$0.00</div>
+            </div>
+            <div class="admin__stat">
+                <div class="admin__stat-label">Orders (counted)</div>
+                <div class="admin__stat-value" th:text="${summary.income.countedOrders}">0</div>
+            </div>
+            <div class="admin__stat">
+                <div class="admin__stat-label">Orders (all)</div>
+                <div class="admin__stat-value" th:text="${summary.income.totalOrders}">0</div>
+            </div>
+        </section>
+
+        <!-- ===== Items sold ===== -->
+        <section class="admin__section">
+            <h2 class="admin__section-title">Items sold</h2>
+
+            <div th:if="${#lists.isEmpty(summary.itemsSold)}" class="text-muted">
+                No items sold for this event.
+            </div>
+
+            <table class="admin__table" th:unless="${#lists.isEmpty(summary.itemsSold)}">
+                <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Qty</th>
+                    <th>Revenue</th>
+                </tr>
+                </thead>
+                <tbody>
+                <th:block th:each="item : ${summary.itemsSold}">
+                    <tr>
+                        <td><strong th:text="${item.name}">Item</strong></td>
+                        <td th:text="${item.quantity}">0</td>
+                        <td th:text="|$${#numbers.formatDecimal(item.revenueCents / 100.0, 1, 2)}|">$0.00</td>
+                    </tr>
+                    <!-- Variant breakdown (only when there's more than the bare item) -->
+                    <tr th:each="v : ${item.variants}"
+                        th:if="${!#lists.isEmpty(v.modifiers)}"
+                        class="admin__variant-row">
+                        <td>
+                            <span class="admin__variant-indent">↳</span>
+                            <span th:text="${#strings.listJoin(v.modifiers, ', ')}">bacon, cheddar</span>
+                        </td>
+                        <td th:text="${v.quantity}">0</td>
+                        <td th:text="|$${#numbers.formatDecimal(v.revenueCents / 100.0, 1, 2)}|">$0.00</td>
+                    </tr>
+                </th:block>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- ===== Orders ===== -->
+        <section class="admin__section">
+            <h2 class="admin__section-title">Orders</h2>
+
+            <div th:if="${#lists.isEmpty(summary.income.orders)}" class="text-muted">
+                No orders recorded.
+            </div>
+
+            <table class="admin__table" th:unless="${#lists.isEmpty(summary.income.orders)}">
+                <thead>
+                <tr>
+                    <th>Order</th>
+                    <th>Customer</th>
+                    <th>Method</th>
+                    <th>Status</th>
+                    <th>Total</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="o : ${summary.income.orders}"
+                    th:classappend="${!o.countedInTotal} ? ' admin__row--muted'">
+                    <td>
+                        <a class="admin__order-id" th:href="@{|/admin/orders/${o.orderId}|}"
+                           th:text="'#' + ${#strings.substring(o.orderId, 0, 8)}">#abc12345</a>
+                    </td>
+                    <td th:text="${o.customerName ?: 'Walk-in'}">Name</td>
+                    <td th:text="${o.paymentMethod}">CARD</td>
+                    <td>
+                        <span class="admin__status"
+                              th:classappend="${'admin__status--' + #strings.toLowerCase(o.status)}"
+                              th:text="${o.status}">Status</span>
+                    </td>
+                    <td th:text="|$${#numbers.formatDecimal(o.totalCents / 100.0, 1, 2)}|">$0.00</td>
+                </tr>
+                </tbody>
+            </table>
+            <p class="text-muted" style="margin-top: var(--space-4);">
+                Greyed rows (cancelled / refunded / unpaid) are excluded from sales totals.
+            </p>
+        </section>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>
