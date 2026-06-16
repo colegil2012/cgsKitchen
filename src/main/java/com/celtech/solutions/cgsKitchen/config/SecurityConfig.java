@@ -147,7 +147,7 @@ public class SecurityConfig {
 
     private UrlBasedCorsConfigurationSource corsSource() {
         var cors = new CorsConfiguration();
-        cors.setAllowedOrigins(props.corsAllowedOrigins());
+        cors.setAllowedOriginPatterns(props.corsAllowedOrigins());
         cors.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         cors.setAllowedHeaders(List.of(
                 "Content-Type", "X-API-Key", "Authorization", "X-CSRF-TOKEN", "X-Requested-With", "Stripe-Signature"));
