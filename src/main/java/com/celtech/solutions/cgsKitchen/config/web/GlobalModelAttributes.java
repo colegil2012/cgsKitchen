@@ -1,5 +1,7 @@
-package com.celtech.solutions.cgsKitchen.config;
+package com.celtech.solutions.cgsKitchen.config.web;
 
+import com.celtech.solutions.cgsKitchen.config.properties.AppProperties;
+import com.celtech.solutions.cgsKitchen.config.security.CartCookieFilter;
 import com.celtech.solutions.cgsKitchen.models.storefront.event.Event;
 import com.celtech.solutions.cgsKitchen.models.storefront.shop.Cart;
 import com.celtech.solutions.cgsKitchen.services.storefront.event.EventService;

@@ -1,6 +1,6 @@
 package com.celtech.solutions.cgsKitchen.services.storefront.event;
 
-import com.celtech.solutions.cgsKitchen.config.AppProperties;
+import com.celtech.solutions.cgsKitchen.config.properties.AppProperties;
 import com.celtech.solutions.cgsKitchen.models.storefront.event.Event;
 import com.celtech.solutions.cgsKitchen.models.storefront.event.EventOccurrence;
 import com.celtech.solutions.cgsKitchen.models.storefront.event.EventSeries;
@@ -122,8 +122,7 @@ public class EventService {
      * admin "Past events" region and the stats drill-in. Includes both
      * one-time events and materialized recurring occurrences.
      */
-    public org.springframework.data.domain.Page<Event> findPastEvents(
-            Instant now, Pageable pageable) {
+    public Page<Event> findPastEvents(Instant now, Pageable pageable) {
         return events.findByActiveFalseAndEndAtLessThanOrderByStartAtDesc(now, pageable);
     }
 
@@ -263,18 +262,14 @@ public class EventService {
 
     /**
      * Activate a one-time concrete event. Enforces reject-while-open and
-     * the "window not already past" guard.
+     * the activation-window rule (within [startAt - lead, endAt]).
      */
     public Event activateOneTimeEvent(String eventId) {
         Event target = events.findById(eventId).orElseThrow(
                 () -> new IllegalArgumentException("Event not found: " + eventId));
 
         guardNoOpenShift(eventId);
-
-        Instant now = Instant.now();
-        if (target.getEndAt() != null && target.getEndAt().isBefore(now)) {
-            throw new IllegalStateException("Cannot activate event whose end time has passed");
-        }
+        guardWithinActivationWindow(target.getStartAt(), target.getEndAt(), Instant.now());
 
         target.setActive(true);
         Event saved = events.save(target);
@@ -321,6 +316,11 @@ public class EventService {
         if (endZdt.isBefore(startZdt)) endZdt = endZdt.plusDays(1);
         final Instant endInstant = endZdt.toInstant();
 
+        // Same window rule the one-time path enforces: the projected slot must
+        // be within [start - lead, end]. Rejects activating a series days
+        // ahead of its next occurrence, or after the window has closed.
+        guardWithinActivationWindow(nextStart, endInstant, now);
+
         // Reuse an existing occurrence for this series+day if present.
         Event occurrence = events.findBySeriesIdAndOccurrenceDate(seriesId, occDate)
                 .orElseGet(() -> materializeOccurrence(s, nextStart, endInstant, occDate));
@@ -361,6 +361,59 @@ public class EventService {
         return saved;
     }
 
+    private void guardNoOpenShift(String allowEventId) {
+        for (Event open : events.findByActiveTrue()) {
+            if (allowEventId != null && open.getId().equals(allowEventId)) continue;
+            throw new ShiftOpenException(open);
+        }
+    }
+
+    /**
+     * The activation lead time, in minutes, from configuration. Falls back
+     * to 15 when the events block is absent (defensive — matches the POS).
+     */
+    private long activationLeadMinutes() {
+        return props.events() == null ? 15 : props.events().activationLeadTimeMinutes();
+    }
+
+    /**
+     * Read-only predicate: may this window be activated at {@code now}?
+     * True only when now is within [startAt - leadTime, endAt]. This is the
+     * single source of truth shared by the data-layer guard, the POS view,
+     * and the admin "can show Activate" decision — so display and
+     * enforcement never diverge. A null startAt is treated as activatable
+     * (shouldn't happen post-rework); a passed endAt is never activatable.
+     */
+    public boolean isActivatable(Instant startAt, Instant endAt, Instant now) {
+        if (endAt != null && endAt.isBefore(now)) return false;
+        if (startAt == null) return true;
+        Instant earliest = startAt.minus(Duration.ofMinutes(Math.max(0, activationLeadMinutes())));
+        return !now.isBefore(earliest);
+    }
+
+    /**
+     * Reject activation outside the acceptable window: too early (before
+     * {@code startAt - app.events.activation-lead-time-minutes}) or too late
+     * (after {@code endAt}). Both throw {@link ActivationWindowException}
+     * with a customer-facing reason. This is the data-layer enforcement that
+     * mirrors {@link #isActivatable}.
+     */
+    private void guardWithinActivationWindow(Instant startAt, Instant endAt, Instant now) {
+        long leadMinutes = activationLeadMinutes();
+        if (startAt != null) {
+            Instant earliest = startAt.minus(Duration.ofMinutes(Math.max(0, leadMinutes)));
+            if (now.isBefore(earliest)) {
+                throw new ActivationWindowException(
+                        "Event cannot be activated until within " + leadMinutes
+                                + " minutes of its start time.");
+            }
+        }
+        if (endAt != null && endAt.isBefore(now)) {
+            throw new ActivationWindowException(
+                    "Event cannot be activated — its window has already closed.");
+        }
+    }
+
     // ================================================================
     //  Auto-close safety net (grace period past endAt)
     // ================================================================
@@ -382,18 +435,6 @@ public class EventService {
     // ================================================================
     //  Internals
     // ================================================================
-
-    /**
-     * Reject activation if any event is currently operator-open (active),
-     * other than the one being (re)activated. The operator must close the
-     * current shift first.
-     */
-    private void guardNoOpenShift(String allowEventId) {
-        for (Event open : events.findByActiveTrue()) {
-            if (allowEventId != null && open.getId().equals(allowEventId)) continue;
-            throw new ShiftOpenException(open);
-        }
-    }
 
     /** Build (but don't activate) a concrete occurrence from a series. */
     private Event materializeOccurrence(EventSeries s, Instant startAt, Instant endAt, LocalDate date) {
@@ -570,5 +611,16 @@ public class EventService {
             this.openEvent = openEvent;
         }
         public Event getOpenEvent() { return openEvent; }
+    }
+
+    /**
+     * Thrown when activation is attempted outside the event's acceptable
+     * window: before {@code startAt - app.events.activation-lead-time-minutes},
+     * or after {@code endAt}. Carries a human-readable reason for the UI.
+     */
+    public static class ActivationWindowException extends IllegalStateException {
+        public ActivationWindowException(String message) {
+            super(message);
+        }
     }
 }

@@ -1,7 +1,7 @@
 package com.celtech.solutions.cgsKitchen.controllers.storefront;
 
-import com.celtech.solutions.cgsKitchen.config.AppProperties;
-import com.celtech.solutions.cgsKitchen.config.CartCookieFilter;
+import com.celtech.solutions.cgsKitchen.config.properties.AppProperties;
+import com.celtech.solutions.cgsKitchen.config.security.CartCookieFilter;
 import com.celtech.solutions.cgsKitchen.delivery.DeliveryProvider;
 import com.celtech.solutions.cgsKitchen.models.storefront.shop.Cart;
 import com.celtech.solutions.cgsKitchen.models.storefront.kitchen.Order;

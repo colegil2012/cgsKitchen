@@ -76,10 +76,13 @@
                          th:text="${s.address.toSingleLine()}">venue</div>
                     <div class="admin__event-card-actions">
                         <form th:action="@{|/admin/series/${s.id}/activate|}" method="post"
-                              th:if="${activeShift == null}">
+                              th:if="${activeShift == null and activatable[s.id]}">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                             <button class="btn btn-primary btn-sm" type="submit">Activate</button>
                         </form>
+                        <button class="btn btn-primary btn-sm" type="button" disabled
+                                th:if="${activeShift == null and !activatable[s.id]}"
+                                th:title="${activatableReason[s.id]}">Activate</button>
                         <a class="btn btn-ghost btn-sm" th:href="@{|/admin/series/${s.id}|}">Edit</a>
                         <form th:action="@{|/admin/series/${s.id}/delete|}" method="post"
                               onsubmit="return confirm('Delete this series? Past occurrences are kept.');">
@@ -115,10 +118,13 @@
                         <span class="admin__status admin__status--ready"
                               th:if="${e.active}">Active</span>
                         <form th:action="@{|/admin/events/${e.id}/activate|}" method="post"
-                              th:if="${!e.active and activeShift == null}">
+                              th:if="${!e.active and activeShift == null and activatable[e.id]}">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                             <button class="btn btn-primary btn-sm" type="submit">Activate</button>
                         </form>
+                        <button class="btn btn-primary btn-sm" type="button" disabled
+                                th:if="${!e.active and activeShift == null and !activatable[e.id]}"
+                                th:title="${activatableReason[e.id]}">Activate</button>
                         <a class="btn btn-ghost btn-sm" th:href="@{|/admin/events/${e.id}|}">Edit</a>
                         <form th:action="@{|/admin/events/${e.id}/delete|}" method="post"
                               onsubmit="return confirm('Delete this event?');">

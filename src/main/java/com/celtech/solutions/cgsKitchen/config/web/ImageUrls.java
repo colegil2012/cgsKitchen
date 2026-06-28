@@ -1,5 +1,6 @@
-package com.celtech.solutions.cgsKitchen.config;
+package com.celtech.solutions.cgsKitchen.config.web;
 
+import com.celtech.solutions.cgsKitchen.config.properties.AppProperties;
 import com.celtech.solutions.cgsKitchen.util.ImageUrlUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

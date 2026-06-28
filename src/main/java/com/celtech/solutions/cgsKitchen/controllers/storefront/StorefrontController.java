@@ -1,6 +1,6 @@
 package com.celtech.solutions.cgsKitchen.controllers.storefront;
 
-import com.celtech.solutions.cgsKitchen.config.AppProperties;
+import com.celtech.solutions.cgsKitchen.config.properties.AppProperties;
 import com.celtech.solutions.cgsKitchen.models.storefront.event.EventOccurrence;
 import com.celtech.solutions.cgsKitchen.services.storefront.event.EventService;
 import com.celtech.solutions.cgsKitchen.services.storefront.menu.MenuService;

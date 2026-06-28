@@ -1,6 +1,6 @@
 package com.celtech.solutions.cgsKitchen.services.storefront.kitchen;
 
-import com.celtech.solutions.cgsKitchen.config.AppProperties;
+import com.celtech.solutions.cgsKitchen.config.properties.AppProperties;
 import com.celtech.solutions.cgsKitchen.models.storefront.menu.MenuItem;
 import com.celtech.solutions.cgsKitchen.models.storefront.menu.meta.Category;
 import com.celtech.solutions.cgsKitchen.models.storefront.shop.Cart;

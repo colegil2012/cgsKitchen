@@ -1,6 +1,6 @@
 package com.celtech.solutions.cgsKitchen.controllers.user;
 
-import com.celtech.solutions.cgsKitchen.config.AppProperties;
+import com.celtech.solutions.cgsKitchen.config.properties.AppProperties;
 import com.celtech.solutions.cgsKitchen.models.user.User;
 import com.celtech.solutions.cgsKitchen.services.mail.EmailVerificationEmail;
 import com.celtech.solutions.cgsKitchen.services.user.TurnstileService;

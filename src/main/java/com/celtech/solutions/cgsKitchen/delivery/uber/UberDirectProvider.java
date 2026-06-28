@@ -1,6 +1,6 @@
 package com.celtech.solutions.cgsKitchen.delivery.uber;
 
-import com.celtech.solutions.cgsKitchen.config.AppProperties;
+import com.celtech.solutions.cgsKitchen.config.properties.AppProperties;
 import com.celtech.solutions.cgsKitchen.delivery.DeliveryProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

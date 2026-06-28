@@ -1,4 +1,4 @@
-package com.celtech.solutions.cgsKitchen.config;
+package com.celtech.solutions.cgsKitchen.config.persistence;
 
 import com.celtech.solutions.cgsKitchen.models.storefront.kitchen.DeliveryEvent;
 import com.celtech.solutions.cgsKitchen.models.storefront.kitchen.Order;

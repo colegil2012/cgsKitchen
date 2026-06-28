@@ -1,6 +1,6 @@
 package com.celtech.solutions.cgsKitchen.services.mail;
 
-import com.celtech.solutions.cgsKitchen.config.AppProperties;
+import com.celtech.solutions.cgsKitchen.config.properties.AppProperties;
 import com.celtech.solutions.cgsKitchen.models.mail.MailMessage;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.InternetAddress;
