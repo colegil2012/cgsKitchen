@@ -52,7 +52,29 @@ public class PosApiController {
 
 
     // ------------------------------------------------------------------
-    // POS — create an order from items being rung up
+    //  POS customer lookup
+    //  Returns 200 {userId, displayName} when the email matches a registered user;
+    //  404 when there's no match. Intentionally minimal
+    // ------------------------------------------------------------------
+
+    @GetMapping("/pos/customers/lookup")
+    public ResponseEntity<?> lookupCustomer(@RequestParam String email) {
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.status(400)
+                    .body(new ErrorResponse("bad_request", "email is required"));
+        }
+        return userService.findByEmail(email.trim())
+                .<ResponseEntity<?>>map(u -> ResponseEntity.ok(
+                        new CustomerMatch(u.getId(), u.getEmail(), u.getDisplayName())))
+                .orElseGet(() -> ResponseEntity.status(404)
+                        .body(new ErrorResponse("not_found",
+                                "No registered customer with that email.")));
+    }
+
+    public record CustomerMatch(String userId, String email, String displayName) {}
+
+    // ------------------------------------------------------------------
+    // POS — create an order from POS system
     // ------------------------------------------------------------------
 
     @PostMapping("/pos/orders")
@@ -118,32 +140,6 @@ public class PosApiController {
         return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
                 .body(saved);
     }
-
-    //
-    //  GET /api/pos/customers/lookup?email=...
-    //  Returns 200 {userId, displayName} when the email matches a registered user;
-    //  404 when there's no match. Intentionally minimal — this is an
-    //  account-enumeration surface, so it returns only what the POS needs to
-    //  attach the order (id + a name to show), nothing more. Safe here because the
-    //  endpoint is behind the API-key chain (only the terminal can call it).
-
-    @GetMapping("/pos/customers/lookup")
-    public ResponseEntity<?> lookupCustomer(@RequestParam String email) {
-        if (email == null || email.isBlank()) {
-            return ResponseEntity.status(400)
-                    .body(new ErrorResponse("bad_request", "email is required"));
-        }
-        return userService.findByEmail(email.trim())
-                .<ResponseEntity<?>>map(u -> ResponseEntity.ok(
-                        new CustomerMatch(u.getId(), u.getEmail(), u.getDisplayName())))
-                .orElseGet(() -> ResponseEntity.status(404)
-                        .body(new ErrorResponse("not_found",
-                                "No registered customer with that email.")));
-    }
-
-    public record CustomerMatch(String userId, String email, String displayName) {}
-
-
 
     // ------------------------------------------------------------------
     // Stripe Terminal — connection token + payment intent for in-person
@@ -323,7 +319,6 @@ public class PosApiController {
             return ResponseEntity.ok(Map.of("status", "idle"));
         }
     }
-
 
     private RequestOptions requestOptions() {
         return RequestOptions.builder().build();
