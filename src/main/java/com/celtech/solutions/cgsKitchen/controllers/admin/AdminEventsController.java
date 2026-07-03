@@ -1,6 +1,6 @@
 package com.celtech.solutions.cgsKitchen.controllers.admin;
 
-import com.celtech.solutions.cgsKitchen.config.AppProperties;
+import com.celtech.solutions.cgsKitchen.config.properties.AppProperties;
 import com.celtech.solutions.cgsKitchen.models.storefront.event.Event;
 import com.celtech.solutions.cgsKitchen.models.storefront.event.EventSeries;
 import com.celtech.solutions.cgsKitchen.services.storefront.event.EventService;
@@ -95,11 +95,36 @@ public class AdminEventsController {
         model.addAttribute("activeShift", activeShift);
 
         // Recurring series templates.
-        model.addAttribute("series", seriesService.findAll());
+        List<EventSeries> seriesList = seriesService.findAll();
+        model.addAttribute("series", seriesList);
 
         // One-time events, current/upcoming.
         List<Event> oneTime = eventService.findOneTimeUpcoming(now);
         model.addAttribute("oneTimeEvents", oneTime);
+
+        // Per-item activation eligibility — display must match enforcement.
+        // The Activate button is enabled only when within the window.
+        Map<String, Boolean> activatable = new HashMap<>();
+        Map<String, String> activatableReason = new HashMap<>();
+        ZoneId zone = zone();
+        for (Event e : oneTime) {
+            boolean ok = eventService.isActivatable(e.getStartAt(), e.getEndAt(), now);
+            activatable.put(e.getId(), ok);
+            activatableReason.put(e.getId(), activationHint(ok, e.getStartAt(), e.getEndAt(), now));
+        }
+        for (EventSeries s : seriesList) {
+            Instant projectedStart = eventService.projectedNextStartForSeries(s.getId(), zone);
+            Instant projectedEnd = projectedSeriesEnd(s, projectedStart, zone);
+            boolean ok = projectedStart != null
+                    && eventService.isActivatable(projectedStart, projectedEnd, now);
+            activatable.put(s.getId(), ok);
+            activatableReason.put(s.getId(),
+                    projectedStart == null
+                            ? "No upcoming occurrence — schedule may have expired."
+                            : activationHint(ok, projectedStart, projectedEnd, now));
+        }
+        model.addAttribute("activatable", activatable);
+        model.addAttribute("activatableReason", activatableReason);
 
         // Past events — ended + inactive, paginated newest-first.
         Page<Event> past = eventService.findPastEvents(
@@ -109,6 +134,27 @@ public class AdminEventsController {
         model.addAttribute("pastTotalPages", past.getTotalPages());
 
         return "admin/events/list";
+    }
+
+    /** Tooltip text explaining why Activate is disabled (or that it's ready). */
+    private String activationHint(boolean ok, Instant startAt, Instant endAt, Instant now) {
+        if (ok) return "Ready to activate.";
+        if (endAt != null && endAt.isBefore(now)) {
+            return "Window has closed — can no longer be activated.";
+        }
+        long lead = props.events() == null ? 15 : props.events().activationLeadTimeMinutes();
+        return "Too early — can be activated within " + lead + " minutes of start.";
+    }
+
+    /** Projected window end for a series' next occurrence (matches EventService). */
+    private Instant projectedSeriesEnd(EventSeries s, Instant projectedStart, ZoneId zone) {
+        if (projectedStart == null || s.getRecurrence() == null) return null;
+        ZonedDateTime startZdt = projectedStart.atZone(zone);
+        EventSeries.DayWindow w = s.getRecurrence().windowFor(startZdt.getDayOfWeek());
+        if (w == null || w.getEndTime() == null) return null;
+        ZonedDateTime endZdt = startZdt.toLocalDate().atTime(w.getEndTime()).atZone(zone);
+        if (endZdt.isBefore(startZdt)) endZdt = endZdt.plusDays(1);
+        return endZdt.toInstant();
     }
 
     // ================================================================
@@ -122,7 +168,6 @@ public class AdminEventsController {
         return "admin/events/edit";
     }
 
-    /** Edit a one-time event. */
     /** Edit a one-time event. {id} constrained to a Mongo ObjectId so it
      *  cannot swallow the literal /events/new route. */
     @GetMapping("/events/{id:[a-fA-F0-9]{24}}")
@@ -188,7 +233,7 @@ public class AdminEventsController {
         try {
             eventService.activateOneTimeEvent(id);
             redirect.addFlashAttribute("notice", "Event activated — shift open.");
-        } catch (EventService.ShiftOpenException ex) {
+        } catch (EventService.ShiftOpenException | EventService.ActivationWindowException ex) {
             redirect.addFlashAttribute("error", ex.getMessage());
         } catch (Exception ex) {
             redirect.addFlashAttribute("error", "Could not activate: " + ex.getMessage());
@@ -202,7 +247,7 @@ public class AdminEventsController {
             Event occ = eventService.activateSeriesOccurrence(id, zone());
             redirect.addFlashAttribute("notice",
                     "Series activated — shift open for " + occ.getOccurrenceDate() + ".");
-        } catch (EventService.ShiftOpenException ex) {
+        } catch (EventService.ShiftOpenException | EventService.ActivationWindowException ex) {
             redirect.addFlashAttribute("error", ex.getMessage());
         } catch (Exception ex) {
             redirect.addFlashAttribute("error", "Could not activate: " + ex.getMessage());

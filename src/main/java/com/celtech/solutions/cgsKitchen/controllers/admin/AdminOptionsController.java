@@ -1,6 +1,5 @@
 package com.celtech.solutions.cgsKitchen.controllers.admin;
 
-import com.celtech.solutions.cgsKitchen.config.AppProperties;
 import com.celtech.solutions.cgsKitchen.models.storefront.menu.meta.OptionChoice;
 import com.celtech.solutions.cgsKitchen.models.storefront.menu.meta.OptionGroup;
 import com.celtech.solutions.cgsKitchen.repositories.storefront.menu.meta.OptionChoiceRepository;

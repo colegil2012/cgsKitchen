@@ -1,6 +1,6 @@
 package com.celtech.solutions.cgsKitchen.controllers.api;
 
-import com.celtech.solutions.cgsKitchen.config.AppProperties;
+import com.celtech.solutions.cgsKitchen.config.properties.AppProperties;
 import com.celtech.solutions.cgsKitchen.models.storefront.event.Event;
 import com.celtech.solutions.cgsKitchen.services.storefront.event.EventService;
 import com.celtech.solutions.cgsKitchen.services.storefront.event.EventSummaryService;
@@ -103,6 +103,9 @@ public class PosEventController {
         } catch (EventService.ShiftOpenException e) {
             return ResponseEntity.status(409)
                     .body(new ErrorResponse("shift_open", e.getMessage()));
+        } catch (EventService.ActivationWindowException e) {
+            return ResponseEntity.status(400)
+                    .body(new ErrorResponse("activation_window", e.getMessage()));
         } catch (IllegalStateException | IllegalArgumentException e) {
             return ResponseEntity.status(400)
                     .body(new ErrorResponse("activation_failed", e.getMessage()));
@@ -135,6 +138,9 @@ public class PosEventController {
         } catch (EventService.ShiftOpenException e) {
             return ResponseEntity.status(409)
                     .body(new ErrorResponse("shift_open", e.getMessage()));
+        } catch (EventService.ActivationWindowException e) {
+            return ResponseEntity.status(400)
+                    .body(new ErrorResponse("activation_window", e.getMessage()));
         } catch (IllegalStateException | IllegalArgumentException e) {
             return ResponseEntity.status(400)
                     .body(new ErrorResponse("activation_failed", e.getMessage()));
@@ -219,17 +225,8 @@ public class PosEventController {
     }
 
     private EventView toView(Event e, Instant now) {
-        boolean canActivate;
-        long activationLeadTimeMinutes =
-                props.events() == null ? 15 : props.events().activationLeadTimeMinutes();
-        if (e.isActive()) {
-            canActivate = false;
-        } else if (e.getStartAt() != null) {
-            Instant earliest = e.getStartAt().minusSeconds(activationLeadTimeMinutes * 60);
-            canActivate = !now.isBefore(earliest);
-        } else {
-            canActivate = true; // unknown start (shouldn't happen post-rework)
-        }
+        boolean canActivate = !e.isActive()
+                && eventService.isActivatable(e.getStartAt(), e.getEndAt(), now);
 
         return new EventView(
                 e.getId(),                 // null for a series projection

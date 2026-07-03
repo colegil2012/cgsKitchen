@@ -1,6 +1,5 @@
 package com.celtech.solutions.cgsKitchen.controllers.admin;
 
-import com.celtech.solutions.cgsKitchen.config.AppProperties;
 import com.celtech.solutions.cgsKitchen.models.user.User;
 import com.celtech.solutions.cgsKitchen.repositories.user.AddressRepository;
 import com.celtech.solutions.cgsKitchen.repositories.user.PaymentMethodRepository;

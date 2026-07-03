@@ -1,5 +1,6 @@
-package com.celtech.solutions.cgsKitchen.config;
+package com.celtech.solutions.cgsKitchen.config.security;
 
+import com.celtech.solutions.cgsKitchen.config.properties.AppProperties;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

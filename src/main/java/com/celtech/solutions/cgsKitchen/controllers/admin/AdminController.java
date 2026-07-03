@@ -1,6 +1,5 @@
 package com.celtech.solutions.cgsKitchen.controllers.admin;
 
-import com.celtech.solutions.cgsKitchen.config.AppProperties;
 import com.celtech.solutions.cgsKitchen.models.storefront.kitchen.Order;
 import com.celtech.solutions.cgsKitchen.repositories.storefront.kitchen.OrderRepository;
 import com.celtech.solutions.cgsKitchen.repositories.storefront.menu.MenuItemRepository;
@@ -13,7 +12,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 /**

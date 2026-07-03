@@ -128,6 +128,7 @@ app:
     publishable-key: ${STRIPE_PUBLISHABLE_KEY:}
     webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
     terminal-location-id: ${STRIPE_LOCATION_ID:}
+    terminal-reader-id: ${STRIPE_READER_ID:}
 
   delivery:
     provider: ${DELIVERY_PROVIDER:mock}

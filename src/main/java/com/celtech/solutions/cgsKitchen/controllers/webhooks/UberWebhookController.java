@@ -1,6 +1,6 @@
 package com.celtech.solutions.cgsKitchen.controllers.webhooks;
 
-import com.celtech.solutions.cgsKitchen.config.AppProperties;
+import com.celtech.solutions.cgsKitchen.config.properties.AppProperties;
 import com.celtech.solutions.cgsKitchen.delivery.uber.UberDeliveryStatusMapper;
 import com.celtech.solutions.cgsKitchen.models.storefront.kitchen.Order;
 import com.celtech.solutions.cgsKitchen.services.storefront.kitchen.DeliveryEventService;

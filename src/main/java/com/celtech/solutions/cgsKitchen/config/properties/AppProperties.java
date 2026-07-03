@@ -1,4 +1,4 @@
-package com.celtech.solutions.cgsKitchen.config;
+package com.celtech.solutions.cgsKitchen.config.properties;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -52,7 +52,8 @@ public record AppProperties(
             String secretKey,
             String publishableKey,
             String webhookSecret,
-            String terminalLocationId
+            String terminalLocationId,
+            String terminalReaderId
     ) {
         public boolean isConfigured() {
             return secretKey != null && !secretKey.isBlank();

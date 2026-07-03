@@ -1,6 +1,6 @@
 package com.celtech.solutions.cgsKitchen.controllers.api;
 
-import com.celtech.solutions.cgsKitchen.config.AppProperties;
+import com.celtech.solutions.cgsKitchen.config.properties.AppProperties;
 import com.celtech.solutions.cgsKitchen.models.storefront.kitchen.Order;
 import com.celtech.solutions.cgsKitchen.services.storefront.event.EventService;
 import com.celtech.solutions.cgsKitchen.services.storefront.kitchen.OrderService;
@@ -8,9 +8,12 @@ import com.celtech.solutions.cgsKitchen.services.user.UserService;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.terminal.ConnectionToken;
+import com.stripe.model.terminal.Reader;
 import com.stripe.net.RequestOptions;
 import com.stripe.param.PaymentIntentCreateParams;
 import com.stripe.param.terminal.ConnectionTokenCreateParams;
+import com.stripe.param.terminal.ReaderCancelActionParams;
+import com.stripe.param.terminal.ReaderProcessPaymentIntentParams;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Positive;
@@ -49,7 +52,29 @@ public class PosApiController {
 
 
     // ------------------------------------------------------------------
-    // POS — create an order from items being rung up
+    //  POS customer lookup
+    //  Returns 200 {userId, displayName} when the email matches a registered user;
+    //  404 when there's no match. Intentionally minimal
+    // ------------------------------------------------------------------
+
+    @GetMapping("/pos/customers/lookup")
+    public ResponseEntity<?> lookupCustomer(@RequestParam String email) {
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.status(400)
+                    .body(new ErrorResponse("bad_request", "email is required"));
+        }
+        return userService.findByEmail(email.trim())
+                .<ResponseEntity<?>>map(u -> ResponseEntity.ok(
+                        new CustomerMatch(u.getId(), u.getEmail(), u.getDisplayName())))
+                .orElseGet(() -> ResponseEntity.status(404)
+                        .body(new ErrorResponse("not_found",
+                                "No registered customer with that email.")));
+    }
+
+    public record CustomerMatch(String userId, String email, String displayName) {}
+
+    // ------------------------------------------------------------------
+    // POS — create an order from POS system
     // ------------------------------------------------------------------
 
     @PostMapping("/pos/orders")
@@ -116,32 +141,6 @@ public class PosApiController {
                 .body(saved);
     }
 
-    //
-    //  GET /api/pos/customers/lookup?email=...
-    //  Returns 200 {userId, displayName} when the email matches a registered user;
-    //  404 when there's no match. Intentionally minimal — this is an
-    //  account-enumeration surface, so it returns only what the POS needs to
-    //  attach the order (id + a name to show), nothing more. Safe here because the
-    //  endpoint is behind the API-key chain (only the terminal can call it).
-
-    @GetMapping("/pos/customers/lookup")
-    public ResponseEntity<?> lookupCustomer(@RequestParam String email) {
-        if (email == null || email.isBlank()) {
-            return ResponseEntity.status(400)
-                    .body(new ErrorResponse("bad_request", "email is required"));
-        }
-        return userService.findByEmail(email.trim())
-                .<ResponseEntity<?>>map(u -> ResponseEntity.ok(
-                        new CustomerMatch(u.getId(), u.getEmail(), u.getDisplayName())))
-                .orElseGet(() -> ResponseEntity.status(404)
-                        .body(new ErrorResponse("not_found",
-                                "No registered customer with that email.")));
-    }
-
-    public record CustomerMatch(String userId, String email, String displayName) {}
-
-
-
     // ------------------------------------------------------------------
     // Stripe Terminal — connection token + payment intent for in-person
     // ------------------------------------------------------------------
@@ -193,15 +192,137 @@ public class PosApiController {
         );
     }
 
+    // ============================================================================
+    //  Stripe Terminal — server-driven collection on a physical reader (S710)
+    // ============================================================================
+
+    /**
+     * Create a card-present PaymentIntent for an existing order and push it to the
+     * configured reader so the customer can tap/insert. This is the server-driven
+     * equivalent of the SDK's collectPaymentMethod + confirm — the reader handles
+     * the card interaction, then Stripe fires payment_intent.succeeded to the
+     * webhook, which marks the order PAID/CARD.
+     *
+     * <p>The order must already exist (created via POST /api/pos/orders) and be in
+     * PENDING_PAYMENT. We stamp order_id into the intent metadata so the webhook
+     * can find the order — exactly the same contract the web checkout uses, which
+     * is why no webhook change is needed.
+     *
+     * <p>Returns the reader's action status so the POS can show "Present card…".
+     * The terminal mock path (Stripe not configured) returns a mock so local dev
+     * and tests don't need a real reader.
+     */
+    @PostMapping("/terminal/collect")
+    public ResponseEntity<?> collectOnReader(@Valid @RequestBody CollectRequest req)
+            throws StripeException {
+
+        // The order must exist and be awaiting payment.
+        Order order = orderService.findById(req.orderId()).orElse(null);
+        if (order == null) {
+            return ResponseEntity.status(404).body(
+                    new ErrorResponse("not_found", "Order " + req.orderId() + " not found"));
+        }
+        if (order.getStatus() != Order.Status.PENDING_PAYMENT) {
+            // Idempotency / safety: don't re-collect on an order that's already
+            // paid or otherwise past the pay step.
+            return ResponseEntity.status(409).body(
+                    new ErrorResponse("not_collectable",
+                            "Order is " + order.getStatus() + "; only PENDING_PAYMENT can collect."));
+        }
+
+        if (!props.stripe().isConfigured()) {
+            // Mock path for local/dev without Stripe keys or a real reader.
+            return ResponseEntity.ok(new CollectResponse(
+                    order.getId(), "mock_pi", "processing", "mock"));
+        }
+
+        String readerId = props.stripe().terminalReaderId();
+        if (readerId == null || readerId.isBlank()) {
+            return ResponseEntity.status(500).body(
+                    new ErrorResponse("no_reader",
+                            "No STRIPE_TERMINAL_READER_ID configured on the server."));
+        }
+
+        // 1) Create the card_present PaymentIntent (mirrors /terminal/payment-intent,
+        //    but amount is taken from the order total — the server is the price
+        //    authority, never the client).
+        var intentParams = PaymentIntentCreateParams.builder()
+                .setAmount(order.getTotalCents())
+                .setCurrency("usd")
+                .addPaymentMethodType("card_present")
+                .setCaptureMethod(PaymentIntentCreateParams.CaptureMethod.AUTOMATIC)
+                .putMetadata("client_id", props.clientId())
+                .putMetadata("source", "pos")
+                .putMetadata("order_id", order.getId())   // <-- webhook contract
+                .build();
+        PaymentIntent intent = PaymentIntent.create(intentParams, requestOptions());
+
+        // Persist the PI id on the order now, so a webhook that somehow arrives
+        // before we return still finds the order by PI id as a fallback.
+        order.setStripePaymentIntentId(intent.getId());
+        orderService.save(order);
+
+        // 2) Push the intent to the physical reader. The S710 lights up and
+        //    prompts the customer. Authorization happens on the reader.
+        try {
+            var processParams = ReaderProcessPaymentIntentParams.builder()
+                    .setPaymentIntent(intent.getId())
+                    .build();
+            Reader reader = Reader.retrieve(readerId, requestOptions());
+            reader = reader.processPaymentIntent(processParams, requestOptions());
+
+            return ResponseEntity.ok(new CollectResponse(
+                    order.getId(),
+                    intent.getId(),
+                    reader.getAction() == null ? "processing" : reader.getAction().getStatus(),
+                    readerId));
+
+        } catch (StripeException e) {
+            // Reader-specific failures (busy, offline, timeout) surface here.
+            // The order stays PENDING_PAYMENT, so the cashier can retry or fall
+            // back to cash. We DON'T mark anything failed — the order is simply
+            // not yet paid.
+            log.warn("Reader {} failed to process intent {} for order {}: {}",
+                    readerId, intent.getId(), order.getId(), e.getMessage());
+            return ResponseEntity.status(502).body(
+                    new ErrorResponse("reader_error",
+                            "Reader could not start payment: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Cancel the in-progress action on the reader — the cashier hit "Cancel"
+     * before the customer presented a card. Clears the prompt on the S710 so it's
+     * ready for the next sale. Safe to call even if the reader has no current
+     * action (Stripe returns the reader as-is).
+     */
+    @PostMapping("/terminal/cancel")
+    public ResponseEntity<?> cancelReaderAction() throws StripeException {
+        if (!props.stripe().isConfigured()) {
+            return ResponseEntity.ok(Map.of("status", "mock_cancelled"));
+        }
+        String readerId = props.stripe().terminalReaderId();
+        if (readerId == null || readerId.isBlank()) {
+            return ResponseEntity.status(500).body(
+                    new ErrorResponse("no_reader", "No reader configured."));
+        }
+        try {
+            Reader reader = Reader.retrieve(readerId, requestOptions());
+            reader = reader.cancelAction(
+                    ReaderCancelActionParams.builder().build(), requestOptions());
+            return ResponseEntity.ok(Map.of(
+                    "status",
+                    reader.getAction() == null ? "idle" : reader.getAction().getStatus()));
+        } catch (StripeException e) {
+            // Most commonly "no active action" — treat as already-idle, not an error.
+            log.debug("cancelAction on reader {}: {}", readerId, e.getMessage());
+            return ResponseEntity.ok(Map.of("status", "idle"));
+        }
+    }
+
     private RequestOptions requestOptions() {
         return RequestOptions.builder().build();
     }
-
-    // ---- DTOs ----
-
-    //  The POS sends userId (from a successful lookup) plus the display name/email
-    //  so the admin views show the customer without a join. All optional — a plain
-    //  walk-up cash sale sends none of them and shows as "Walk-in (POS)".
 
     public record PosOrderRequest(
             @NotEmpty List<PosLineItem> items,
@@ -223,6 +344,19 @@ public class PosApiController {
             @Positive long amount,
             String orderId
     ) {}
+
+
+    public record CollectRequest(
+            @jakarta.validation.constraints.NotEmpty String orderId
+    ) {}
+
+    public record CollectResponse(
+            String orderId,
+            String paymentIntentId,
+            String readerStatus,   // "processing" | "in_progress" | etc.
+            String readerId
+    ) {}
+
 
     public record ErrorResponse(String code, String message) {}
 }

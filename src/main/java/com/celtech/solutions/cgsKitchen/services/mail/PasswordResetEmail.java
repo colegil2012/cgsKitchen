@@ -1,6 +1,6 @@
 package com.celtech.solutions.cgsKitchen.services.mail;
 
-import com.celtech.solutions.cgsKitchen.config.AppProperties;
+import com.celtech.solutions.cgsKitchen.config.properties.AppProperties;
 import com.celtech.solutions.cgsKitchen.models.mail.MailMessage;
 import com.celtech.solutions.cgsKitchen.models.user.User;
 import lombok.RequiredArgsConstructor;
