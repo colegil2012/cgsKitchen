@@ -73,6 +73,7 @@ public class PosApiController {
 
     public record CustomerMatch(String userId, String email, String displayName) {}
 
+
     // ------------------------------------------------------------------
     // POS — create an order from POS system
     // ------------------------------------------------------------------

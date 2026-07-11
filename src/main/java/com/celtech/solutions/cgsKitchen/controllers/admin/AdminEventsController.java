@@ -61,11 +61,6 @@ public class AdminEventsController {
     private final EventSummaryService summaryService;
     private final AppProperties props;
 
-    @ModelAttribute("brand")
-    public AppProperties.Storefront brand() {
-        return props.storefront();
-    }
-
     @ModelAttribute("zoneId")
     public ZoneId zone() {
         String tz = props.storefront().timezone();

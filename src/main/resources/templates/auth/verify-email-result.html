@@ -13,7 +13,6 @@
 <main class="auth">
     <div class="auth__card">
         <header class="auth__header">
-            <span class="stamp text-muted">Account</span>
             <h1 class="auth__title" th:if="${verified}">Email confirmed</h1>
             <h1 class="auth__title" th:unless="${verified}">Link not valid</h1>
         </header>

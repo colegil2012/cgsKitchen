@@ -17,16 +17,7 @@
             Get in <em>touch.</em>
         </h1>
 
-        <!--
-          Each card is a split: brown label band on the left, value on
-          the right. The "Find us" card has three states:
-            currentEvent → "Open now" + venue + full address + hours
-            nextEvent    → "Next event" + venue + full address + date+hours
-            neither      → "Off the road"
-        -->
         <div class="contact-info">
-
-            <!-- ===== Find us card ===== -->
             <div class="contact-info__card">
                 <div class="contact-info__label">
                     <th:block th:if="${currentEvent != null}">Open now</th:block>
@@ -106,8 +97,7 @@
         <div class="content-page__prose text-center">
             <p>
                 For catering or large orders, email is fastest. Otherwise,
-                come find us — we're easier to chat with in person, with a
-                taco in hand.
+                come find us — we're easier to chat with in person.
             </p>
             <th:block th:if="${brand.instagramUrl() != null}">
                 <p>
