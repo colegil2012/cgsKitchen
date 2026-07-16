@@ -18,9 +18,11 @@
             </span>
             <h1 class="admin__title"
                 th:text="|Order #${#strings.substring(order.id, 0, 8)}|">Order #abc12345</h1>
-            <span class="admin__status"
-                  th:classappend="${'admin__status--' + #strings.toLowerCase(order.status.name())}"
-                  th:text="${order.status}">Status</span>
+            <div class="admin__status-wrapper">
+                <span class="admin__status"
+                      th:classappend="${'admin__status--' + #strings.toLowerCase(order.status.name())}"
+                      th:text="${order.status}">Status</span>
+            </div>
         </header>
 
         <div class="alert alert-success" th:if="${notice}" th:text="${notice}">notice</div>

@@ -121,11 +121,9 @@ Thymeleaf. Each controller is a management surface over one collection:
 The JSON surface under `/api/**` that the POS terminal and the kitchen/menu
 displays consume. Authenticated by API key. Key controllers:
 
-- **`PosApiController`** — `POST /api/pos/orders` (create an order from rung-up
-  items), Stripe Terminal connection-token + payment-intent issuance for the
-  in-person card reader, and a minimal customer-email lookup for attaching an
+- **`PosApiController`** — `POST /api/pos/customer-lookup` Minimal customer-email lookup for attaching an
   order to a registered user.
-- **`OrderStatusController`** — `POST /api/orders/{id}/status` (validated
+- **`PosOrderController`** — `POST /api/orders/{id}/status` (validated
   transitions), `/cash-payment` (POS confirms a cash sale), `/redispatch`
   (request a new courier), and reads: a single order, its event audit log, its
   delivery telemetry, and `GET /api/orders/active` (everything in flight — what
@@ -133,8 +131,8 @@ displays consume. Authenticated by API key. Key controllers:
 - **`PosMenuController` / `PosEventController`** — menu reads (available and
   full/86-aware), item and choice availability toggles (86'ing), event status,
   activation, and per-event sales summaries.
-- **`PublicApiController`** — the small set of endpoints under `/api/public/**`
-  that are intentionally keyless.
+- **`PosStripeController`** — `POST /api/terminal/` Stripe Terminal connection-token + payment-intent issuance for the
+  in-person card reader
 
 ### 4. Delivery + payments integration
 
@@ -416,9 +414,9 @@ src/main/java/com/celtech/solutions/cgsKitchen/
   controllers/
     storefront/      StorefrontController, CartController  (Thymeleaf + cart)
     admin/           Orders, Menu, Options, Events, Users  (admin console)
-    api/pos/         PosApiController, OrderStatusController,
-                     PosMenuController, PosEventController
-    api/             PublicApiController                   (keyless /api/public)
+    api/             PosApiController, PosOrderController,
+                     PosMenuController, PosEventController,
+                     PosStripeController
     user/            AuthController, AccountController
     webhooks/        StripeWebhookController, UberWebhookController
   services/
