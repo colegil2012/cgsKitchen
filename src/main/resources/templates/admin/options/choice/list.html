@@ -13,22 +13,20 @@
 <main class="admin">
     <div class="container">
         <header class="admin__header">
-            <span class="admin__link">
-                <a th:href="@{/admin/options}">← Options</a>
-            </span>
+            <a class="admin__link" th:href="@{/admin/options}">← Options</a>
             <h1 class="admin__title">Choices</h1>
-            <p class="text-muted">
-                Individual modifier values. 86 one to remove it from every dish that
-                offers it; restore brings it back instantly.
-            </p>
+            <div class="admin__toolbar">
+                <a class="btn btn-primary" th:href="@{/admin/options/choice/new}">+ New choice</a>
+            </div>
         </header>
 
         <div class="alert alert-success" th:if="${notice}" th:text="${notice}">notice</div>
         <div class="alert alert-error"   th:if="${error}"  th:text="${error}">error</div>
 
-        <div class="admin__toolbar">
-            <a class="btn btn-primary" th:href="@{/admin/options/choice/new}">+ New choice</a>
-        </div>
+        <p class="text-muted admin__description">
+            Individual modifier values. 86 one to remove it from every dish that
+            offers it; restore brings it back instantly.
+        </p>
 
         <section class="admin__section">
             <table class="admin__table">

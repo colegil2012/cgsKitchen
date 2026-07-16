@@ -162,6 +162,7 @@ app:
   events:
     auto-close-grace-hours: ${EVENTS_AUTO_CLOSE_GRACE_HOURS:4}
     activation-lead-time-minutes: ${EVENTS_ACTIVATION_LEAD_TIME_MINUTES:15}
+    event-horizon-days: ${EVENTS_EVENT_HORIZON_DAYS:30}
 
 #==============================================================================
 # Mailer Configuration

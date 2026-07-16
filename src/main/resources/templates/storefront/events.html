@@ -51,9 +51,10 @@
                 </h2>
 
                 <ul class="events-list">
-                    <li class="events-list__item"
-                        th:each="occ : ${week.value}"
-                        th:classappend="${occ.recurring} ? ' events-list__item--recurring' : ''">
+                    <li th:each="occ : ${week.value}"
+                        class="events-list__item"
+                        th:classappend="${occ.recurring} ? ' events-list__item--recurring' : ''"
+                        th:attrappend="class=${occ.event.cancelled} ? ' events-list__item--cancelled' : ''">
 
                         <!-- Date column — day-of-week + numeric day -->
                         <div class="events-list__date">
@@ -73,7 +74,9 @@
                                         ? occ.event.address.venueName
                                         : occ.event.title}">Venue</h3>
                                 <span class="events-list__badge"
-                                      th:if="${occ.recurring}">Weekly</span>
+                                      th:if="${occ.recurring and !occ.event.cancelled}">Weekly</span>
+                                <span class="events-list__badge events-list__badge--cancelled"
+                                      th:if="${occ.event.cancelled}">Cancelled</span>
                             </div>
 
                             <div class="events-list__address"

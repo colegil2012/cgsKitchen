@@ -22,8 +22,6 @@ import java.util.TreeMap;
 @RequiredArgsConstructor
 public class StorefrontController {
 
-    private static final int HORIZON_DAYS = 60;
-
     private final MenuService menuService;
     private final EventService eventService;
     private final AppProperties props;
@@ -57,7 +55,7 @@ public class StorefrontController {
     public String calendar(Model model) {
         ZoneId zone = zone();
         LocalDate today = LocalDate.now(zone);
-        LocalDate horizon = today.plusDays(HORIZON_DAYS);
+        LocalDate horizon = today.plusDays(props.events().eventHorizonDays());
 
         List<EventOccurrence> occurrences = eventService.expandOccurrences(today, horizon, zone);
 
@@ -74,7 +72,7 @@ public class StorefrontController {
         model.addAttribute("weeksOfOccurrences", sorted);
         model.addAttribute("zoneId", zone);
         model.addAttribute("today", today);
-        model.addAttribute("horizonDays", HORIZON_DAYS);
+        model.addAttribute("horizonDays", props.events().eventHorizonDays());
         return "storefront/events";
     }
 

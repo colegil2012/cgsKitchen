@@ -13,18 +13,15 @@
 <main class="admin">
     <div class="container">
         <header class="admin__header">
-            <span class="admin__link">
-                <a th:href="@{/admin}">← Admin</a>
-            </span>
+            <a class="admin__link" th:href="@{/admin}">← Admin</a>
             <h1 class="admin__title">Menu items</h1>
+            <div class="admin__toolbar">
+                <a class="btn btn-primary" th:href="@{/admin/menu/new}">+ New item</a>
+            </div>
         </header>
 
         <div class="alert alert-success" th:if="${notice}" th:text="${notice}">notice</div>
         <div class="alert alert-error"   th:if="${error}"  th:text="${error}">error</div>
-
-        <div class="admin__toolbar">
-            <a class="btn btn-primary" th:href="@{/admin/menu/new}">+ New item</a>
-        </div>
 
         <section class="admin__section">
             <table class="admin__table">

@@ -121,6 +121,22 @@ public class AdminEventsController {
         model.addAttribute("activatable", activatable);
         model.addAttribute("activatableReason", activatableReason);
 
+        // Per-series upcoming dates the operator may cancel (dropdown source),
+        // plus already-cancelled upcoming occurrences to render fogged.
+        Map<String, List<LocalDate>> cancellableDates = new HashMap<>();
+        Map<String, List<Event>> cancelledOccurrences = new HashMap<>();
+        for (EventSeries s : seriesList) {
+            cancellableDates.put(s.getId(),
+                    eventService.upcomingCancellableDates(s.getId(), zone));
+            List<Event> cancelledUpcoming = eventService.findOccurrencesOf(s.getId()).stream()
+                    .filter(Event::isCancelled)
+                    .filter(e -> e.getEndAt() != null && e.getEndAt().isAfter(now))
+                    .toList();
+            cancelledOccurrences.put(s.getId(), cancelledUpcoming);
+        }
+        model.addAttribute("cancellableDates", cancellableDates);
+        model.addAttribute("cancelledOccurrences", cancelledOccurrences);
+
         // Past events — ended + inactive, paginated newest-first.
         Page<Event> past = eventService.findPastEvents(
                 now, PageRequest.of(pastPage, PAST_PAGE_SIZE));
@@ -258,6 +274,56 @@ public class AdminEventsController {
             redirect.addFlashAttribute("notice", "Shift closed.");
         } catch (Exception ex) {
             redirect.addFlashAttribute("error", "Could not close shift: " + ex.getMessage());
+        }
+        return "redirect:/admin/events";
+    }
+
+    // ================================================================
+    //  Cancellation — one-time events + per-date series occurrences
+    // ================================================================
+
+    /** Cancel a one-time concrete event. */
+    @PostMapping("/events/{id}/cancel")
+    public String cancelOneTime(@PathVariable String id,
+                                @RequestParam(required = false) String reason,
+                                RedirectAttributes redirect) {
+        try {
+            eventService.cancelOneTimeEvent(id, reason);
+            redirect.addFlashAttribute("notice", "Event cancelled.");
+        } catch (Exception ex) {
+            redirect.addFlashAttribute("error", "Could not cancel: " + ex.getMessage());
+        }
+        return "redirect:/admin/events";
+    }
+
+    /**
+     * Cancel a specific date of a series — materialize-on-cancel. The
+     * {@code date} param is the local occurrence date ("yyyy-MM-dd").
+     */
+    @PostMapping("/series/{id}/cancel")
+    public String cancelSeriesDate(@PathVariable String id,
+                                   @RequestParam String date,
+                                   @RequestParam(required = false) String reason,
+                                   RedirectAttributes redirect) {
+        try {
+            LocalDate d = LocalDate.parse(date);
+            Event occ = eventService.cancelSeriesOccurrence(id, d, reason, zone());
+            redirect.addFlashAttribute("notice",
+                    "Cancelled the " + occ.getOccurrenceDate() + " occurrence.");
+        } catch (Exception ex) {
+            redirect.addFlashAttribute("error", "Could not cancel occurrence: " + ex.getMessage());
+        }
+        return "redirect:/admin/events";
+    }
+
+    /** Un-cancel a concrete event (one-time or a materialized occurrence). */
+    @PostMapping("/events/{id}/uncancel")
+    public String uncancel(@PathVariable String id, RedirectAttributes redirect) {
+        try {
+            eventService.uncancel(id);
+            redirect.addFlashAttribute("notice", "Cancellation reverted.");
+        } catch (Exception ex) {
+            redirect.addFlashAttribute("error", "Could not revert: " + ex.getMessage());
         }
         return "redirect:/admin/events";
     }

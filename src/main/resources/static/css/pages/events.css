@@ -90,6 +90,31 @@
     border-left: 4px solid var(--color-grass);
 }
 
+/* Cancelled occurrence — fogged card with a struck-through title. Kept
+   visible (not hidden) so customers know a normally-scheduled stop is off. */
+.events-list__item--cancelled {
+    opacity: 0.55;
+    filter: grayscale(0.4);
+    border-style: dashed;
+    position: relative;
+}
+
+.events-list__item--cancelled:hover {
+    /* Don't lift a cancelled card — it isn't actionable. */
+    transform: none;
+    box-shadow: var(--shadow-sm);
+}
+
+.events-list__item--cancelled .events-list__title,
+.events-list__item--cancelled .events-list__hours {
+    text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
+}
+
+.events-list__badge--cancelled {
+    background-color: var(--color-orange);
+}
+
 /* ----- Date column ----- */
 
 .events-list__date {

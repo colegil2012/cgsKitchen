@@ -84,19 +84,15 @@ public class EventService {
     public Optional<Event> findActiveShift() {
         return events.findFirstByActiveTrue();
     }
-
     public Optional<Event> findById(String id) {
         return events.findById(id);
     }
-
     public Optional<EventSeries> findSeriesById(String id) {
         return series.findById(id);
     }
-
     public Page<Event> findAll(Pageable pageable) {
         return events.findAllByOrderByStartAtDesc(pageable);
     }
-
     public Page<EventSeries> findAllSeries(Pageable pageable) {
         return series.findAllByOrderByCreatedAtDesc(pageable);
     }
@@ -124,6 +120,40 @@ public class EventService {
      */
     public Page<Event> findPastEvents(Instant now, Pageable pageable) {
         return events.findByActiveFalseAndEndAtLessThanOrderByStartAtDesc(now, pageable);
+    }
+
+    /**
+     * Projected upcoming occurrence dates for a series, within the calendar
+     * horizon — used to populate the admin "cancel a date" dropdown. Dates
+     * already represented by a concrete Event (activated OR already
+     * cancelled) are excluded so the operator can't double-act on one.
+     */
+    public List<LocalDate> upcomingCancellableDates(String seriesId, ZoneId zone) {
+        EventSeries s = series.findById(seriesId).orElse(null);
+        if (s == null) return List.of();
+
+        Instant now = Instant.now();
+        LocalDate today = now.atZone(zone).toLocalDate();
+        int horizon = props.events() == null ? 30 : props.events().eventHorizonDays();
+        Instant rangeStart = today.atStartOfDay(zone).toInstant();
+        Instant rangeEnd = today.plusDays(horizon).atTime(23, 59, 59).atZone(zone).toInstant();
+
+        // Dates already claimed by a concrete row (activated or cancelled).
+        var claimed = new HashSet<LocalDate>();
+        for (Event e : events.findBySeriesIdOrderByStartAtDesc(seriesId)) {
+            if (e.getOccurrenceDate() != null) claimed.add(e.getOccurrenceDate());
+        }
+
+        List<LocalDate> out = new ArrayList<>();
+        var seen = new HashSet<LocalDate>();
+        for (ProjectedOccurrence p : expandSeries(s, rangeStart, rangeEnd, zone)) {
+            LocalDate d = p.start.atZone(zone).toLocalDate();
+            if (d.isBefore(today)) continue;
+            if (claimed.contains(d)) continue;
+            if (seen.add(d)) out.add(d);
+        }
+        out.sort(Comparator.naturalOrder());
+        return out;
     }
 
     /**
@@ -268,6 +298,10 @@ public class EventService {
         Event target = events.findById(eventId).orElseThrow(
                 () -> new IllegalArgumentException("Event not found: " + eventId));
 
+        if (target.isCancelled()) {
+            throw new IllegalStateException("Event is cancelled and cannot be activated.");
+        }
+
         guardNoOpenShift(eventId);
         guardWithinActivationWindow(target.getStartAt(), target.getEndAt(), Instant.now());
 
@@ -325,11 +359,91 @@ public class EventService {
         Event occurrence = events.findBySeriesIdAndOccurrenceDate(seriesId, occDate)
                 .orElseGet(() -> materializeOccurrence(s, nextStart, endInstant, occDate));
 
+        if (occurrence.isCancelled()) {
+            throw new IllegalStateException(
+                    "This occurrence (" + occDate + ") is cancelled and cannot be activated.");
+        }
+
         occurrence.setActive(true);
         Event saved = events.save(occurrence);
         log.info("Activated series {} occurrence {} for {} ({} – {})",
                 seriesId, saved.getId(), occDate, saved.getStartAt(), saved.getEndAt());
         return saved;
+    }
+
+    /**
+     * Cancel a one-time concrete event. Sets the cancelled flag (and clears
+     * active so a cancelled shift can't stay "open"). Idempotent.
+     */
+    public Event cancelOneTimeEvent(String eventId, String reason) {
+        Event e = events.findById(eventId).orElseThrow(
+                () -> new IllegalArgumentException("Event not found: " + eventId));
+        applyCancellation(e, reason);
+        Event saved = events.save(e);
+        log.info("Cancelled one-time event {} ({})", saved.getId(), saved.getTitle());
+        return saved;
+    }
+
+    /**
+     * Cancel a specific occurrence of a series on a given local date —
+     * materialize-on-cancel. If an Event already exists for this
+     * (seriesId, date) it's flagged cancelled; otherwise a concrete Event
+     * is materialized from the series for that date and flagged. The series
+     * template and its other dates are untouched; the storefront calendar
+     * dedup makes this cancelled row win over the date's projection.
+     */
+    public Event cancelSeriesOccurrence(String seriesId, LocalDate date, String reason, ZoneId zone) {
+        EventSeries s = series.findById(seriesId).orElseThrow(
+                () -> new IllegalArgumentException("Series not found: " + seriesId));
+
+        EventSeries.RecurrenceRule rule = s.getRecurrence();
+        EventSeries.DayWindow window = rule == null ? null : rule.windowFor(date.getDayOfWeek());
+        if (window == null || window.getStartTime() == null || window.getEndTime() == null) {
+            throw new IllegalArgumentException(
+                    "Series has no scheduled window on " + date + " (" + date.getDayOfWeek() + ").");
+        }
+
+        ZonedDateTime startZdt = date.atTime(window.getStartTime()).atZone(zone);
+        ZonedDateTime endZdt = date.atTime(window.getEndTime()).atZone(zone);
+        if (endZdt.isBefore(startZdt)) endZdt = endZdt.plusDays(1);
+        final Instant startInstant = startZdt.toInstant();
+        final Instant endInstant = endZdt.toInstant();
+
+        Event occurrence = events.findBySeriesIdAndOccurrenceDate(seriesId, date)
+                .orElseGet(() -> materializeOccurrence(s, startInstant, endInstant, date));
+
+        applyCancellation(occurrence, reason);
+        Event saved = events.save(occurrence);
+        log.info("Cancelled series {} occurrence for {} ({})", seriesId, date, saved.getId());
+        return saved;
+    }
+
+    /**************************************************************************************************
+     * Cancel and deactivate events/series
+     *************************************************************************************************/
+
+    /**
+     * Un-cancel a concrete event (operator changed their mind). Leaves the
+     * row in place, inactive. For a materialized series occurrence that had
+     * no other reason to exist, the row stays — it's harmless and the
+     * calendar dedup treats it as a normal (uncancelled) concrete row.
+     */
+    public Event uncancel(String eventId) {
+        Event e = events.findById(eventId).orElseThrow(
+                () -> new IllegalArgumentException("Event not found: " + eventId));
+        e.setCancelled(false);
+        e.setCancelledAt(null);
+        e.setCancellationReason(null);
+        Event saved = events.save(e);
+        log.info("Un-cancelled event {} ({})", saved.getId(), saved.getTitle());
+        return saved;
+    }
+
+    private void applyCancellation(Event e, String reason) {
+        e.setCancelled(true);
+        e.setActive(false);
+        e.setCancelledAt(Instant.now());
+        e.setCancellationReason(reason == null || reason.isBlank() ? null : reason.trim());
     }
 
     /**
@@ -389,6 +503,17 @@ public class EventService {
         if (startAt == null) return true;
         Instant earliest = startAt.minus(Duration.ofMinutes(Math.max(0, activationLeadMinutes())));
         return !now.isBefore(earliest);
+    }
+
+    /**
+     * Event-aware activatability: same window rule as
+     * {@link #isActivatable(Instant, Instant, Instant)}, plus a cancelled
+     * event is never activatable.
+     */
+    public boolean isActivatable(Event e, Instant now) {
+        if (e == null) return false;
+        if (e.isCancelled()) return false;
+        return isActivatable(e.getStartAt(), e.getEndAt(), now);
     }
 
     /**

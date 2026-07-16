@@ -115,7 +115,8 @@ public record AppProperties(
 
     public record Events(
             long autoCloseGraceHours,
-            long activationLeadTimeMinutes
+            long activationLeadTimeMinutes,
+            int eventHorizonDays
     ) {}
 
     public record Mail(

@@ -89,6 +89,12 @@ public class Event {
     @Indexed
     private boolean active;
 
+    @Indexed
+    private boolean cancelled;
+
+    private Instant cancelledAt;
+    private String cancellationReason;
+
     /**
      * Whether customers may place online orders for this appearance.
      * Defaults true. False = private/walk-in-only, or operator switched
@@ -119,6 +125,7 @@ public class Event {
      */
     public boolean isOpenForCustomers(Instant now) {
         return active
+                && !cancelled
                 && onlineOrderingOpen
                 && startAt != null && endAt != null
                 && !now.isBefore(startAt) && !now.isAfter(endAt);

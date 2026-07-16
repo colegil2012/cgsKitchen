@@ -32,7 +32,7 @@ logging:
 
 app:
   base-url: ${BASE_URL:https://celtechgs.kitchen}
-  cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:https://celtechgs.kitchen,https://www.celtechgs.kitchen,http://localhost:6173,http://localhost:6174,http://localhost:6175}
+  cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:https://celtechgs.kitchen,https://www.celtechgs.kitchen,http://localhost:6173}
   cookies:
     secure: ${COOKIE_SECURE:true}
   checkout:
