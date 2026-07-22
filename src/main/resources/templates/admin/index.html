@@ -20,35 +20,59 @@
         <div class="alert alert-success" th:if="${notice}" th:text="${notice}">notice</div>
         <div class="alert alert-error"   th:if="${error}"  th:text="${error}">error</div>
 
-        <!-- ----- Stat tiles ----- -->
-        <section class="admin__stats">
-            <div class="admin__stat">
-                <div class="admin__stat-label">Current Wait</div>
-                <div class="admin__stat-value" th:text="${currentWait}">0</div>
+        <!-- ===== Event synopsis — only while a shift is live ===== -->
+        <section class="admin__section" th:if="${activeShift != null}">
+            <header class="admin__section-header admin__section-header--center">
+                <h2 class="admin__section-title">Current Shift:</h2>
+                <span class="admin__section-sub" th:text="${activeShift.title}">Venue</span>
+            </header>
+
+            <div class="admin__stats">
+                <div class="admin__stat">
+                    <div class="admin__stat-label">Current Wait</div>
+                    <div class="admin__stat-value" th:text="${currentWait}">0</div>
+                </div>
+                <div class="admin__stat">
+                    <div class="admin__stat-label">Event Orders</div>
+                    <div class="admin__stat-value" th:text="${currentEventOrders}">0</div>
+                </div>
+                <div class ="admin__stat admin__stat--accent">
+                    <div class="admin__stat-label">Paid/New</div>
+                    <div class="admin__stat-value" th:text="${paidCount}">0</div>
+                </div>
+                <div class="admin__stat admin__stat--accent">
+                    <div class="admin__stat-label">In kitchen</div>
+                    <div class="admin__stat-value" th:text="${inKitchenCount}">0</div>
+                </div>
+                <div class="admin__stat admin__stat--accent">
+                    <div class="admin__stat-label">Ready</div>
+                    <div class="admin__stat-value" th:text="${readyCount}">0</div>
+                </div>
             </div>
-            <div class="admin__stat">
-                <div class="admin__stat-label">Total orders</div>
-                <div class="admin__stat-value" th:text="${totalOrders}">0</div>
-            </div>
-            <div class="admin__stat">
-                <div class="admin__stat-label">Users</div>
-                <div class="admin__stat-value" th:text="${totalUsers}">0</div>
-            </div>
-            <div class="admin__stat admin__stat--accent">
-                <div class="admin__stat-label">In kitchen</div>
-                <div class="admin__stat-value" th:text="${inKitchenCount}">0</div>
-            </div>
-            <div class="admin__stat admin__stat--accent">
-                <div class="admin__stat-label">Ready</div>
-                <div class="admin__stat-value" th:text="${readyCount}">0</div>
-            </div>
-            <div class="admin__stat admin__stat--warn">
-                <div class="admin__stat-label">86'd items</div>
-                <div class="admin__stat-value" th:text="${unavailableItems}">0</div>
-            </div>
-            <div class="admin__stat admin__stat--warn">
-                <div class="admin__stat-label">86'd options</div>
-                <div class="admin__stat-value" th:text="${unavailableChoices}">0</div>
+        </section>
+
+        <!-- ===== Overview — always visible ===== -->
+        <section class="admin__section">
+            <header class="admin__section-header admin__section-header--center">
+            </header>
+
+            <div class="admin__stats">
+                <div class="admin__stat">
+                    <div class="admin__stat-label">Total orders</div>
+                    <div class="admin__stat-value" th:text="${totalOrders}">0</div>
+                </div>
+                <div class="admin__stat">
+                    <div class="admin__stat-label">Users</div>
+                    <div class="admin__stat-value" th:text="${totalUsers}">0</div>
+                </div>
+                <div class="admin__stat admin__stat--warn">
+                    <div class="admin__stat-label">86'd items</div>
+                    <div class="admin__stat-value" th:text="${unavailableItems}">0</div>
+                </div>
+                <div class="admin__stat admin__stat--warn">
+                    <div class="admin__stat-label">86'd options</div>
+                    <div class="admin__stat-value" th:text="${unavailableChoices}">0</div>
+                </div>
             </div>
         </section>
 
@@ -56,23 +80,23 @@
         <section class="admin__nav-tiles">
             <a class="admin__tile" th:href="@{/admin/menu}">
                 <span class="admin__tile-title">Menu</span>
-                <span class="admin__tile-sub">Items, prices, categories</span>
+                <span class="admin__tile-sub">Menu Items, Prices, Categories</span>
             </a>
             <a class="admin__tile" th:href="@{/admin/options}">
                 <span class="admin__tile-title">Options</span>
-                <span class="admin__tile-sub">Groups, choices, 86</span>
+                <span class="admin__tile-sub">Changeable Groups and Choices</span>
             </a>
             <a class="admin__tile" th:href="@{/admin/orders}">
                 <span class="admin__tile-title">Orders</span>
-                <span class="admin__tile-sub">Track, update status</span>
+                <span class="admin__tile-sub">Order Tracking and Status Management</span>
             </a>
             <a class="admin__tile" th:href="@{/admin/users}">
                 <span class="admin__tile-title">Users</span>
-                <span class="admin__tile-sub">Accounts, history</span>
+                <span class="admin__tile-sub">User Accounts, Order History</span>
             </a>
             <a class="admin__tile" th:href="@{/admin/events}">
                 <span class="admin__tile-title">Events</span>
-                <span class="admin__tile-sub">Schedule, update</span>
+                <span class="admin__tile-sub">Events and Event Series Management</span>
             </a>
         </section>
 

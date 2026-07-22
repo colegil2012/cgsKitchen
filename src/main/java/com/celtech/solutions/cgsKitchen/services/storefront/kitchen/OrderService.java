@@ -4,6 +4,7 @@ import com.celtech.solutions.cgsKitchen.config.properties.AppProperties;
 import com.celtech.solutions.cgsKitchen.models.storefront.shop.Cart;
 import com.celtech.solutions.cgsKitchen.models.storefront.kitchen.Order;
 import com.celtech.solutions.cgsKitchen.repositories.storefront.kitchen.OrderRepository;
+import com.celtech.solutions.cgsKitchen.services.storefront.event.EventService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -41,6 +42,7 @@ public class OrderService {
 
     private final OrderRepository orders;
     private final KitchenQuoteService kitchenQuotes;
+    private final EventService eventService;
     private final AppProperties props;
 
     /**
@@ -149,6 +151,10 @@ public class OrderService {
 
     public Optional<Order> findById(String id) {
         return orders.findById(id);
+    }
+
+    public List<Order> findAllByEventId(String eventId) {
+        return orders.findAllByEventId(eventId);
     }
 
     public Optional<Order> findByPaymentIntentId(String paymentIntentId) {

@@ -1,10 +1,12 @@
 package com.celtech.solutions.cgsKitchen.controllers.admin;
 
+import com.celtech.solutions.cgsKitchen.models.storefront.event.Event;
 import com.celtech.solutions.cgsKitchen.models.storefront.kitchen.Order;
 import com.celtech.solutions.cgsKitchen.repositories.storefront.kitchen.OrderRepository;
 import com.celtech.solutions.cgsKitchen.repositories.storefront.menu.MenuItemRepository;
 import com.celtech.solutions.cgsKitchen.repositories.storefront.menu.meta.OptionChoiceRepository;
 import com.celtech.solutions.cgsKitchen.repositories.user.UserRepository;
+import com.celtech.solutions.cgsKitchen.services.storefront.event.EventService;
 import com.celtech.solutions.cgsKitchen.services.storefront.kitchen.KitchenQuoteService;
 import com.celtech.solutions.cgsKitchen.services.storefront.kitchen.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -30,12 +32,18 @@ public class AdminController {
     private final MenuItemRepository menuItems;
     private final OptionChoiceRepository optionChoices;
     private final KitchenQuoteService kitchenQuotes;
+    private final EventService eventService;
 
     @GetMapping
     public String dashboard(Model model) {
+        Event activeShift = eventService.findActiveShift().orElse(null);
+        long currentEventOrders = activeShift != null
+                ? orderService.findAllByEventId(activeShift.getId()).size()
+                : 0;
         long totalOrders   = orders.count();
         long totalUsers    = users.count();
         long abandonedCheckouts = orders.findByStatus(Order.Status.PENDING_PAYMENT).size();
+        long paid          = orders.findByStatus(Order.Status.PAID).size();
         long inKitchen     = orders.findByStatus(Order.Status.IN_KITCHEN).size();
         long ready         = orders.findByStatus(Order.Status.READY).size();
         long unavailableChoices = optionChoices.findByAvailableFalse().size();
@@ -50,12 +58,15 @@ public class AdminController {
         model.addAttribute("totalOrders", totalOrders);
         model.addAttribute("totalUsers", totalUsers);
         model.addAttribute("abandonedCheckouts", abandonedCheckouts);
+        model.addAttribute("paidCount", paid);
         model.addAttribute("inKitchenCount", inKitchen);
         model.addAttribute("readyCount", ready);
         model.addAttribute("unavailableChoices", unavailableChoices);
         model.addAttribute("unavailableItems", unavailableItems);
         model.addAttribute("recentOrders", recent.getContent());
         model.addAttribute("currentWait", currentWait);
+        model.addAttribute("activeShift", activeShift);
+        model.addAttribute("currentEventOrders", currentEventOrders);
         return "admin/index";
     }
 }

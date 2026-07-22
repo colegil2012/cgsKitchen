@@ -39,7 +39,7 @@ public class EventSummaryService {
     );
 
     public EventSummary summarize(String eventId) {
-        List<Order> all = orders.findByEventId(eventId);
+        List<Order> all = orders.findAllByEventId(eventId);
 
         List<OrderLine> orderLines = new ArrayList<>();
         long totalCents = 0, cashCents = 0, cardCents = 0, otherCents = 0;

@@ -15,10 +15,12 @@
         <header class="admin__header">
             <a class="admin__link" th:href="@{/admin/events}">← Events</a>
             <h1 class="admin__title" th:text="${event.title}">Event</h1>
+            <div class="admin__toolbar">
             <p class="text-muted"
                th:if="${event.startAt != null}"
                th:text="${#temporals.format(event.startAt.atZone(zoneId), 'EEEE, MMMM d, yyyy')}">
                 date</p>
+            </div>
         </header>
 
         <!-- ===== Income tiles ===== -->

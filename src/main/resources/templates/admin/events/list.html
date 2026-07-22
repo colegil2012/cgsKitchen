@@ -58,83 +58,129 @@
 
         <!-- ===== Recurring series ===== -->
         <section class="admin__section">
-            <h2 class="admin__section-title">Recurring series</h2>
+            <header class="admin__section-header admin__section-header--center">
+                <h2 class="admin__section-title">Recurring series</h2>
+            </header>
 
             <div th:if="${#lists.isEmpty(series)}" class="text-muted">
                 No recurring series yet.
             </div>
 
-            <div class="admin__card-row" th:unless="${#lists.isEmpty(series)}">
-                <div class="admin__event-card" th:each="s : ${series}">
-                    <div class="admin__event-card-title" th:text="${s.title}">Series</div>
-                    <div class="admin__event-card-sub"
-                         th:if="${s.recurrence != null}"
-                         th:text="${s.recurrence.describe()}">Tuesdays 5–10 PM</div>
-                    <div class="admin__event-card-sub text-muted"
-                         th:if="${s.address != null}"
-                         th:text="${s.address.toSingleLine()}">venue</div>
-                    <div class="admin__event-card-actions">
-                        <form th:action="@{|/admin/series/${s.id}/activate|}" method="post"
-                              th:if="${activeShift == null and activatable[s.id]}">
-                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                            <button class="btn btn-primary btn-sm" type="submit">Activate</button>
-                        </form>
-                        <button class="btn btn-primary btn-sm" type="button" disabled
-                                th:if="${activeShift == null and !activatable[s.id]}"
-                                th:title="${activatableReason[s.id]}">Activate</button>
-                        <a class="btn btn-ghost btn-sm" th:href="@{|/admin/series/${s.id}|}">Edit</a>
-                        <form th:action="@{|/admin/series/${s.id}/delete|}" method="post"
-                              onsubmit="return confirm('Delete this series? Past occurrences are kept.');">
-                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                            <button class="btn btn-ghost btn-sm" type="submit">Delete</button>
-                        </form>
+            <div class="admin__series-list" th:unless="${#lists.isEmpty(series)}">
+                <article class="admin__series-row" th:each="s : ${series}">
+
+                    <!-- LEFT: identity + primary actions -->
+                    <div class="admin__series-row-main">
+                        <div class="admin__event-card-title" th:text="${s.title}">Series</div>
+                        <div class="admin__event-card-sub"
+                             th:if="${s.recurrence != null}"
+                             th:text="${s.recurrence.describe()}">Tuesdays 5–10 PM</div>
+                        <div class="admin__event-card-sub text-muted"
+                             th:if="${s.address != null}"
+                             th:text="${s.address.toSingleLine()}">venue</div>
+
+                        <!-- Next projected occurrence — quick at-a-glance for the operator.
+                             When this series is the currently open shift, show that instead. -->
+                        <div class="admin__next-badge admin__next-badge--live"
+                             th:if="${activeShift != null and activeShift.seriesId == s.id}">
+                            <span class="admin__next-badge-label">Live now</span>
+                            <span class="admin__next-badge-value"
+                                  th:text="${activeShift.endAt != null
+                                      ? 'ends ' + #temporals.format(activeShift.endAt.atZone(zoneId), 'h:mm a')
+                                      : 'shift open'}">ends 10:00 PM</span>
+                        </div>
+                        <div class="admin__next-badge"
+                             th:if="${(activeShift == null or activeShift.seriesId != s.id)
+                                  and nextProjectedStart[s.id] != null}">
+                            <span class="admin__next-badge-label">Next</span>
+                            <span class="admin__next-badge-value"
+                                  th:text="${#temporals.format(nextProjectedStart[s.id].atZone(zoneId),
+                                            'EEE MMM d, h:mm a')
+                                        + (nextProjectedEnd[s.id] != null
+                                            ? ' – ' + #temporals.format(nextProjectedEnd[s.id].atZone(zoneId), 'h:mm a')
+                                            : '')}">Tue May 5, 5:00 PM – 10:00 PM</span>
+                        </div>
+                        <div class="admin__next-badge admin__next-badge--muted"
+                             th:if="${(activeShift == null or activeShift.seriesId != s.id)
+                                  and nextProjectedStart[s.id] == null}">
+                            <span class="admin__next-badge-label">Next</span>
+                            <span class="admin__next-badge-value">No upcoming occurrence</span>
+                        </div>
+
+                        <div class="admin__event-card-actions">
+                            <form th:action="@{|/admin/series/${s.id}/activate|}" method="post"
+                                  th:if="${activeShift == null and activatable[s.id]}">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button class="btn btn-primary btn-sm" type="submit">Activate</button>
+                            </form>
+                            <button class="btn btn-primary btn-sm" type="button" disabled
+                                    th:if="${activeShift == null and !activatable[s.id]}"
+                                    th:title="${activatableReason[s.id]}">Activate</button>
+                            <a class="btn btn-ghost btn-sm" th:href="@{|/admin/series/${s.id}|}">Edit</a>
+                            <form th:action="@{|/admin/series/${s.id}/delete|}" method="post"
+                                  onsubmit="return confirm('Delete this series? Past occurrences are kept.');">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button class="btn btn-ghost btn-sm" type="submit">Delete</button>
+                            </form>
+                        </div>
                     </div>
 
-                    <!-- Cancel a specific upcoming date -->
-                    <form class="admin__cancel-date" method="post"
-                          th:action="@{|/admin/series/${s.id}/cancel|}"
-                          th:if="${!#lists.isEmpty(cancellableDates[s.id])}"
-                          onsubmit="return confirm('Cancel this date? A cancelled appearance will show on the calendar.');">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <label class="admin__cancel-date-label">Cancel a date</label>
-                        <div class="admin__cancel-date-row">
-                            <select class="form-input" name="date" required>
-                                <option th:each="d : ${cancellableDates[s.id]}"
-                                        th:value="${d}"
-                                        th:text="${#temporals.format(d, 'EEE MMM d, yyyy')}">Tue May 5</option>
-                            </select>
-                            <input class="form-input" type="text" name="reason"
-                                   placeholder="Reason (optional)"/>
-                            <button class="btn btn-ghost btn-sm" type="submit">Cancel date</button>
-                        </div>
-                    </form>
+                    <!-- RIGHT: cancel-a-date + cancelled upcoming -->
+                    <div class="admin__series-row-cancel">
+                        <!-- Cancel a specific upcoming date -->
+                        <form class="admin__cancel-date" method="post"
+                              th:action="@{|/admin/series/${s.id}/cancel|}"
+                              th:if="${!#lists.isEmpty(cancellableDates[s.id])}"
+                              onsubmit="return confirm('Cancel this date? A cancelled appearance will show on the calendar.');">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <label class="admin__cancel-date-label">Cancel a date</label>
+                            <div class="admin__cancel-date-row">
+                                <select class="form-input" name="date" required>
+                                    <option th:each="d : ${cancellableDates[s.id]}"
+                                            th:value="${d}"
+                                            th:text="${#temporals.format(d, 'EEE MMM d, yyyy')}">Tue May 5</option>
+                                </select>
+                                <input class="form-input" type="text" name="reason"
+                                       placeholder="Reason (optional)"/>
+                                <button class="btn btn-ghost btn-sm" type="submit">Cancel date</button>
+                            </div>
+                        </form>
 
-                    <!-- Already-cancelled upcoming occurrences (fogged) -->
-                    <ul class="admin__cancelled-list"
-                        th:unless="${#lists.isEmpty(cancelledOccurrences[s.id])}">
-                        <li class="admin__cancelled-item"
-                            th:each="c : ${cancelledOccurrences[s.id]}">
-                            <span class="admin__cancelled-strike"
-                                  th:text="${c.occurrenceDate != null
-                                      ? #temporals.format(c.occurrenceDate, 'EEE MMM d')
-                                      : '—'}">Tue May 5</span>
-                            <span class="admin__cancelled-tag">Cancelled</span>
-                            <span class="text-muted admin__cancelled-reason"
-                                  th:if="${c.cancellationReason != null}"
-                                  th:text="${c.cancellationReason}">reason</span>
-                            <form th:action="@{|/admin/events/${c.id}/uncancel|}" method="post">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                <button class="btn btn-ghost btn-sm" type="submit">Undo</button>
-                            </form>
-                        </li>
-                    </ul>
-                </div>
+                        <!-- Already-cancelled upcoming occurrences (fogged) -->
+                        <ul class="admin__cancelled-list"
+                            th:unless="${#lists.isEmpty(cancelledOccurrences[s.id])}">
+                            <li class="admin__cancelled-item"
+                                th:each="c : ${cancelledOccurrences[s.id]}">
+                                <span class="admin__cancelled-strike"
+                                      th:text="${c.occurrenceDate != null
+                                          ? #temporals.format(c.occurrenceDate, 'EEE MMM d')
+                                          : '—'}">Tue May 5</span>
+                                <span class="admin__cancelled-tag">Cancelled</span>
+                                <span class="text-muted admin__cancelled-reason"
+                                      th:if="${c.cancellationReason != null}"
+                                      th:text="${c.cancellationReason}">reason</span>
+                                <form th:action="@{|/admin/events/${c.id}/uncancel|}" method="post">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <button class="btn btn-ghost btn-sm" type="submit">Undo</button>
+                                </form>
+                            </li>
+                        </ul>
+
+                        <!-- Empty-state hint when there's nothing to cancel and nothing already cancelled -->
+                        <p class="text-muted admin__series-row-empty"
+                           th:if="${#lists.isEmpty(cancellableDates[s.id]) and #lists.isEmpty(cancelledOccurrences[s.id])}">
+                            No upcoming dates to cancel.
+                        </p>
+                    </div>
+                </article>
             </div>
         </section>
 
         <!-- ===== One-time events ===== -->
         <section class="admin__section">
-            <h2 class="admin__section-title">One-time events</h2>
+            <header class="admin__section-header admin__section-header--center">
+                <h2 class="admin__section-title">One-time events</h2>
+            </header>
 
             <div th:if="${#lists.isEmpty(oneTimeEvents)}" class="text-muted">
                 No upcoming one-time events.

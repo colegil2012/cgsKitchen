@@ -3,6 +3,7 @@ package com.celtech.solutions.cgsKitchen.controllers.storefront;
 import com.celtech.solutions.cgsKitchen.config.properties.AppProperties;
 import com.celtech.solutions.cgsKitchen.config.security.CartCookieFilter;
 import com.celtech.solutions.cgsKitchen.delivery.DeliveryProvider;
+import com.celtech.solutions.cgsKitchen.models.storefront.event.Event;
 import com.celtech.solutions.cgsKitchen.models.storefront.shop.Cart;
 import com.celtech.solutions.cgsKitchen.models.storefront.kitchen.Order;
 import com.celtech.solutions.cgsKitchen.models.user.Address;
@@ -28,6 +29,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 
 /**
@@ -226,7 +229,7 @@ public class CartController {
         // signed-in user's cart (it'd resolve an empty guest cart → 0 min).
         if (order.getPromisedReadyAt() != null) {
             long mins = Math.max(0,
-                    java.time.Duration.between(java.time.Instant.now(),
+                    Duration.between(Instant.now(),
                             order.getPromisedReadyAt()).toMinutes());
             model.addAttribute("pickupEtaMinutes", Math.max(mins, 5));
         }
@@ -274,7 +277,7 @@ public class CartController {
         // the real problem instead of a Mongo validation 500 if some path
         // ever reaches order creation outside a live event.
         String eventId = eventService.findCurrentlyOpen()
-                .map(com.celtech.solutions.cgsKitchen.models.storefront.event.Event::getId)
+                .map(Event::getId)
                 .orElseThrow(() -> new IllegalStateException(
                         "Checkout reached resolveActiveOrder with no live event"));
 

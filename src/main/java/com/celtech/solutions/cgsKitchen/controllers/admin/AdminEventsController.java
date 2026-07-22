@@ -125,6 +125,8 @@ public class AdminEventsController {
         // plus already-cancelled upcoming occurrences to render fogged.
         Map<String, List<LocalDate>> cancellableDates = new HashMap<>();
         Map<String, List<Event>> cancelledOccurrences = new HashMap<>();
+        Map<String, Instant> nextProjectedStart = new HashMap<>();
+        Map<String, Instant> nextProjectedEnd = new HashMap<>();
         for (EventSeries s : seriesList) {
             cancellableDates.put(s.getId(),
                     eventService.upcomingCancellableDates(s.getId(), zone));
@@ -133,9 +135,18 @@ public class AdminEventsController {
                     .filter(e -> e.getEndAt() != null && e.getEndAt().isAfter(now))
                     .toList();
             cancelledOccurrences.put(s.getId(), cancelledUpcoming);
+
+
+            // "Next" hint for the series row — projected start of the next
+            // materializable occurrence, plus its window end for display.
+            Instant projStart = eventService.projectedNextStartForSeries(s.getId(), zone);
+            nextProjectedStart.put(s.getId(), projStart);
+            nextProjectedEnd.put(s.getId(), projectedSeriesEnd(s, projStart, zone));
         }
         model.addAttribute("cancellableDates", cancellableDates);
         model.addAttribute("cancelledOccurrences", cancelledOccurrences);
+        model.addAttribute("nextProjectedStart", nextProjectedStart);
+        model.addAttribute("nextProjectedEnd", nextProjectedEnd);
 
         // Past events — ended + inactive, paginated newest-first.
         Page<Event> past = eventService.findPastEvents(
