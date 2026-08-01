@@ -7,5 +7,4 @@ import java.util.List;
 
 public interface OrderEventRepository extends MongoRepository<OrderEvent, String> {
     List<OrderEvent> findByOrderIdOrderByOccurredAtAsc(String orderId);
-    List<OrderEvent> findByOrderIdOrderByOccurredAtDesc(String orderId);
 }

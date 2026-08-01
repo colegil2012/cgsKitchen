@@ -165,7 +165,10 @@ public class AdminEventsController {
             return "Window has closed — can no longer be activated.";
         }
         long lead = props.events() == null ? 15 : props.events().activationLeadTimeMinutes();
-        return "Too early — can be activated within " + lead + " minutes of start.";
+        if (startAt != null && now.isBefore(startAt.minusSeconds(lead * 60))) {
+            return "Too early — can be activated within " + lead + " minutes of start.";
+        }
+        return "Unknown reason.";
     }
 
     /** Projected window end for a series' next occurrence (matches EventService). */

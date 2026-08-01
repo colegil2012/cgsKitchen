@@ -36,19 +36,31 @@ public class AdminController {
 
     @GetMapping
     public String dashboard(Model model) {
+
+        //Active Shift Check - Populate event dashboard header with current data
         Event activeShift = eventService.findActiveShift().orElse(null);
         long currentEventOrders = activeShift != null
                 ? orderService.findAllByEventId(activeShift.getId()).size()
                 : 0;
-        long totalOrders   = orders.count();
-        long totalUsers    = users.count();
         long abandonedCheckouts = orders.findByStatus(Order.Status.PENDING_PAYMENT).size();
         long paid          = orders.findByStatus(Order.Status.PAID).size();
         long inKitchen     = orders.findByStatus(Order.Status.IN_KITCHEN).size();
         long ready         = orders.findByStatus(Order.Status.READY).size();
+        long currentWait = kitchenQuotes.currentWait().waitMinutes();
+
+        model.addAttribute("activeShift", activeShift);
+        model.addAttribute("currentEventOrders", currentEventOrders);
+        model.addAttribute("abandonedCheckouts", abandonedCheckouts);
+        model.addAttribute("paidCount", paid);
+        model.addAttribute("inKitchenCount", inKitchen);
+        model.addAttribute("readyCount", ready);
+        model.addAttribute("currentWait", currentWait);
+
+        //Site-wide admin details
+        long totalOrders   = orders.count();
+        long totalUsers    = users.count();
         long unavailableChoices = optionChoices.findByAvailableFalse().size();
         long unavailableItems   = menuItems.findByAvailableFalse().size();
-        long currentWait = kitchenQuotes.currentWait().waitMinutes();
 
         // Recent orders panel: paid-and-beyond only. PENDING_PAYMENT churn
         // from cart-page renders would otherwise dominate this list.
@@ -57,16 +69,9 @@ public class AdminController {
 
         model.addAttribute("totalOrders", totalOrders);
         model.addAttribute("totalUsers", totalUsers);
-        model.addAttribute("abandonedCheckouts", abandonedCheckouts);
-        model.addAttribute("paidCount", paid);
-        model.addAttribute("inKitchenCount", inKitchen);
-        model.addAttribute("readyCount", ready);
         model.addAttribute("unavailableChoices", unavailableChoices);
         model.addAttribute("unavailableItems", unavailableItems);
         model.addAttribute("recentOrders", recent.getContent());
-        model.addAttribute("currentWait", currentWait);
-        model.addAttribute("activeShift", activeShift);
-        model.addAttribute("currentEventOrders", currentEventOrders);
         return "admin/index";
     }
 }
